@@ -27,6 +27,8 @@ class DoctorMessagesPage extends StatelessWidget {
     // Daha fazla konuşma eklenebilir
   ];
 
+  const DoctorMessagesPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -148,7 +150,7 @@ class ChatScreen extends StatefulWidget {
   final String patientName;
   final Map<String, dynamic> patientInfo;
 
-  ChatScreen({
+  const ChatScreen({super.key, 
     required this.patientName,
     required this.patientInfo,
   });
@@ -253,7 +255,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           if (_showQuickResponses)
-            Container(
+            SizedBox(
               height: 50,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,

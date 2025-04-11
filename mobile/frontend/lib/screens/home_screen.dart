@@ -30,14 +30,14 @@ class _HomeScreenState extends State<HomeScreen> {
   };
 
   final List<Map<String, dynamic>> conversations = const [
-    const {
+    {
       'name': 'Prof. Dr. Burak Buz',
       'message':
           'Merhaba, randevu için teşekkürler. Nasıl yardımcı olabilirim?',
       'time': '09:30',
       'unread': 2,
     },
-    const {
+    {
       'name': 'Uzm. Dr. Ayşe Yılmaz',
       'message': 'Test sonuçlarınız hazır. Kontrol etmeniz gerekiyor.',
       'time': '10:15',

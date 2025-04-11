@@ -3,6 +3,8 @@ import '../services/randevu_service.dart';
 import '../models/randevu.dart';
 
 class RandevuScreen extends StatefulWidget {
+  const RandevuScreen({super.key});
+
   @override
   _RandevuScreenState createState() => _RandevuScreenState();
 }

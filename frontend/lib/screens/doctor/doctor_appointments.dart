@@ -25,6 +25,8 @@ class DoctorAppointmentsPage extends StatelessWidget {
     // Daha fazla randevu eklenebilir
   ];
 
+  const DoctorAppointmentsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -62,8 +64,8 @@ class DoctorAppointmentsPage extends StatelessWidget {
             title: Text(appointment['patientName']),
             subtitle: Text('${appointment['time']} - ${appointment['status']}'),
             leading: CircleAvatar(
-              child: Text(appointment['patientName'][0]),
               backgroundColor: HealthApp.primaryColor,
+              child: Text(appointment['patientName'][0]),
             ),
             children: [
               Padding(

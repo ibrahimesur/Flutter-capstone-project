@@ -6,6 +6,8 @@ import 'doctor_patients.dart';
 import 'doctor_messages.dart';
 
 class DoctorDashboard extends StatefulWidget {
+  const DoctorDashboard({super.key});
+
   @override
   _DoctorDashboardState createState() => _DoctorDashboardState();
 }
@@ -38,12 +40,12 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
             ),
             itemBuilder: (context) => [
               PopupMenuItem(
-                child: Text('Profil'),
                 value: 'profile',
+                child: Text('Profil'),
               ),
               PopupMenuItem(
-                child: Text('Çıkış Yap'),
                 value: 'logout',
+                child: Text('Çıkış Yap'),
               ),
             ],
             onSelected: (value) {
@@ -83,6 +85,8 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
 }
 
 class DoctorMessagesPage extends StatelessWidget {
+  const DoctorMessagesPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -188,7 +192,7 @@ class DoctorMessagesPage extends StatelessWidget {
 class ChatScreen extends StatefulWidget {
   final String patientName;
 
-  ChatScreen({required this.patientName});
+  const ChatScreen({super.key, required this.patientName});
 
   @override
   _ChatScreenState createState() => _ChatScreenState();

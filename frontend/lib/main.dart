@@ -13,7 +13,9 @@ class HealthApp extends StatelessWidget {
   static const primaryColor = Color(0xFFE0D3F5);    // Ana pastel lila
   static const secondaryColor = Color(0xFFF0E6FF);  // Açık pastel leylak
   static const backgroundColor = Color(0xFFFAF8FF); // Çok açık lila
-  static const accentColor = Color(0xFF9B8BB4);     // Orta ton leylak
+  static const accentColor = Color(0xFF9B8BB4);
+
+  const HealthApp({super.key});     // Orta ton leylak
 
   @override
   Widget build(BuildContext context) {

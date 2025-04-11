@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class HastaneHaritaScreen extends StatefulWidget {
+  const HastaneHaritaScreen({super.key});
+
   @override
   _HastaneHaritaScreenState createState() => _HastaneHaritaScreenState();
 }

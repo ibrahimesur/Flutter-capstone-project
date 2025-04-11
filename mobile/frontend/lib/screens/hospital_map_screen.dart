@@ -18,7 +18,7 @@ class HospitalMapScreen extends StatelessWidget {
     FloorPlan(
       floorName: 'Zemin Kat',
       description: 'Ana Giriş ve Poliklinikler',
-      departments: const [
+      departments: [
         'Danışma',
         'Acil Servis',
         'Kan Alma',
@@ -29,7 +29,7 @@ class HospitalMapScreen extends StatelessWidget {
     FloorPlan(
       floorName: '1. Kat',
       description: 'Poliklinikler',
-      departments: const [
+      departments: [
         'Üroloji',
         'Kardiyoloji',
         'Dahiliye',
@@ -39,7 +39,7 @@ class HospitalMapScreen extends StatelessWidget {
     FloorPlan(
       floorName: '2. Kat',
       description: 'Ameliyathaneler ve Yoğun Bakım',
-      departments: const [
+      departments: [
         'Ameliyathane',
         'Yoğun Bakım Ünitesi',
         'Sterilizasyon',

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/semptom_service.dart';
 
 class SemptomTaramaScreen extends StatefulWidget {
+  const SemptomTaramaScreen({super.key});
+
   @override
   _SemptomTaramaScreenState createState() => _SemptomTaramaScreenState();
 }

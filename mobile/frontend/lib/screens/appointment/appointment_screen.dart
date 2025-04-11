@@ -369,7 +369,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: Text('Randevuyu Onayla'),
+                child: const Text('Randevuyu Onayla'),
               ),
             ),
           ],

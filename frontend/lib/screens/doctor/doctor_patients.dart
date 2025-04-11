@@ -27,6 +27,8 @@ class DoctorPatientsPage extends StatelessWidget {
     // Daha fazla hasta eklenebilir
   ];
 
+  const DoctorPatientsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(

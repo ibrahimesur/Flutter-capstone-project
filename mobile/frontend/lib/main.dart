@@ -1,100 +1,319 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'screens/home_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/doctor/doctor_dashboard.dart';
-import 'screens/hospital_map_screen.dart';
-import 'screens/doctor/hospital_staff_screen.dart';
-import 'screens/chat/chat_screen.dart';
-import 'screens/appointment/appointment_screen.dart';
+import 'screens/admin/admin_panel.dart';
+import 'screens/patient/patient_profile.dart';
+import 'screens/symptom/symptom_analysis_screen.dart';
+import 'screens/hospital_navigation/hospital_navigation_screen.dart';
+import 'screens/reports/test_results_screen.dart';
 
 void main() {
   runApp(const HealthApp());
 }
 
 class HealthApp extends StatelessWidget {
-  // Renkleri static olarak tanımlayalım ki dışarıdan erişilebilinsin
-  static const primaryColor = Color(0xFFE0D3F5); // Ana pastel lila
-  static const secondaryColor = Color(0xFFF0E6FF); // Açık pastel leylak
-  static const backgroundColor = Color(0xFFFAF8FF); // Çok açık lila
-  static const accentColor = Color(0xFF9B8BB4);
+  const HealthApp({Key? key}) : super(key: key);
 
-  const HealthApp({Key? key}) : super(key: key); // Orta ton leylak
+  // Uygulama genelinde kullanılacak tema renkleri
+  static const Color primaryColor = Color(0xFF3F51B5); // Indigo
+  static const Color accentColor = Color(0xFF00897B); // Teal
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Sağlık Yönetim Sistemi',
       debugShowCheckedModeBanner: false,
-      home: const HomeScreen(),
-      routes: {
-        '/hospital-map': (context) => const HospitalMapScreen(),
-        '/hospital-staff': (context) => const HospitalStaffScreen(),
-        '/chat': (context) => const ChatScreen(
-              recipientName: 'Dr. Burak Buz',
-              recipientTitle: 'Üroloji Uzmanı',
-            ),
-        '/appointment': (context) => const AppointmentScreen(),
-      },
       theme: ThemeData(
-        primarySwatch: Colors.purple,
         primaryColor: primaryColor,
-        scaffoldBackgroundColor: backgroundColor,
-        textTheme: GoogleFonts.poppinsTextTheme(),
-        appBarTheme: AppBarTheme(
-          elevation: 0,
-          backgroundColor: primaryColor.withOpacity(0.85),
-          titleTextStyle: GoogleFonts.poppins(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-          iconTheme: const IconThemeData(color: Colors.black87),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: primaryColor,
+          primary: primaryColor,
+          secondary: accentColor,
         ),
-        cardTheme: CardTheme(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          color: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: primaryColor,
-            foregroundColor: accentColor,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+            backgroundColor: accentColor,
+            foregroundColor: Colors.white,
+          ),
+        ),
+      ),
+      home: const HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final List<Map<String, dynamic>> _menuItems = [
+    {
+      'title': 'Hasta Profili',
+      'icon': Icons.person,
+      'color': Colors.blue,
+      'screen': const PatientProfileScreen(),
+    },
+    {
+      'title': 'Semptom Analizi',
+      'icon': Icons.healing,
+      'color': Colors.orange,
+      'screen': const SymptomAnalysisScreen(),
+    },
+    {
+      'title': 'Hastane İçi Navigasyon',
+      'icon': Icons.map,
+      'color': Colors.green,
+      'screen': const HospitalNavigationScreen(),
+    },
+    {
+      'title': 'Admin Paneli',
+      'icon': Icons.admin_panel_settings,
+      'color': Colors.purple,
+      'screen': const AdminPanelScreen(),
+    },
+    {
+      'title': 'Test Sonuçları',
+      'icon': Icons.assignment,
+      'color': Colors.purple,
+      'screen': const TestResultsScreen(),
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sağlık Yönetim Sistemi'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              // Bildirimler
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              // Ayarlar
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: _buildMenuGrid(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: HealthApp.primaryColor.withOpacity(0.1),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: HealthApp.accentColor,
+                child: Icon(
+                  Icons.person,
+                  size: 30,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Hoş Geldiniz',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  Text(
+                    'Ahmet Yılmaz',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
-            elevation: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildQuickStat(
+                  'Randevular',
+                  '2',
+                  Icons.calendar_today,
+                  Colors.blue,
+                ),
+                _buildQuickStat(
+                  'Reçeteler',
+                  '3',
+                  Icons.medical_services,
+                  Colors.orange,
+                ),
+                _buildQuickStat(
+                  'Tahliller',
+                  '5',
+                  Icons.science,
+                  Colors.green,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickStat(
+      String title, String value, IconData icon, Color color) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            color: color,
+            size: 24,
           ),
         ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: secondaryColor),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: secondaryColor),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: primaryColor, width: 2),
-          ),
-          labelStyle: const TextStyle(color: accentColor),
-          prefixIconColor: accentColor,
         ),
-        chipTheme: ChipThemeData(
-          backgroundColor: secondaryColor.withOpacity(0.3),
-          selectedColor: primaryColor,
-          labelStyle: const TextStyle(color: accentColor),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+          ),
         ),
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          selectedItemColor: accentColor,
-          unselectedItemColor: Colors.grey[400],
+      ],
+    );
+  }
+
+  Widget _buildMenuGrid() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(20),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 1.1,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      itemCount: _menuItems.length,
+      itemBuilder: (context, index) {
+        final item = _menuItems[index];
+        return _buildMenuItem(
+          title: item['title'],
+          icon: item['icon'],
+          color: item['color'],
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => item['screen']),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildMenuItem({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
       ),
     );

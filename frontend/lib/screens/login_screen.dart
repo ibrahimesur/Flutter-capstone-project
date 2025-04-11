@@ -4,6 +4,8 @@ import '../main.dart';
 import 'doctor/doctor_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }

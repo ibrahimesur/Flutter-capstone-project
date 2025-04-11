@@ -5,6 +5,8 @@ import 'doctor/doctor_dashboard.dart';
 import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -89,6 +91,8 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class RandevuPage extends StatelessWidget {
+  const RandevuPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -239,6 +243,8 @@ class RandevuPage extends StatelessWidget {
 }
 
 class HaritaPage extends StatefulWidget {
+  const HaritaPage({super.key});
+
   @override
   _HaritaPageState createState() => _HaritaPageState();
 }
@@ -292,7 +298,7 @@ class _HaritaPageState extends State<HaritaPage> {
       if (benimSiram - aktifSira <= bildirimMesafesi) {
         _showNotification(
           'Sıranız Yaklaşıyor!',
-          'Şu an ${aktifSira} numaralı hasta işlemde. Sıranıza ${benimSiram - aktifSira} kişi kaldı.',
+          'Şu an $aktifSira numaralı hasta işlemde. Sıranıza ${benimSiram - aktifSira} kişi kaldı.',
         );
         setState(() {
           _bildirimGonderildi = true;
@@ -757,6 +763,8 @@ class _HaritaPageState extends State<HaritaPage> {
 }
 
 class SemptomPage extends StatefulWidget {
+  const SemptomPage({super.key});
+
   @override
   _SemptomPageState createState() => _SemptomPageState();
 }
@@ -1061,6 +1069,8 @@ class MesajlarPage extends StatelessWidget {
     },
   ];
 
+  const MesajlarPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -1195,7 +1205,7 @@ class PatientChatScreen extends StatefulWidget {
   final String doctorName;
   final Map<String, dynamic> doctorInfo;
 
-  PatientChatScreen({
+  const PatientChatScreen({super.key, 
     required this.doctorName,
     required this.doctorInfo,
   });
@@ -1496,6 +1506,8 @@ class _PatientChatScreenState extends State<PatientChatScreen> {
 }
 
 class AyarlarPage extends StatelessWidget {
+  const AyarlarPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Padding(
