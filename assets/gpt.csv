@@ -1,0 +1,774 @@
+disease;department
+panic disorder;Psychiatry
+vocal cord polyp;Otolaryngology
+turner syndrome;Endocrinology
+cryptorchidism;Urology
+poisoning due to ethylene glycol;Toxicology
+atrophic vaginitis;Internal Medicine
+fracture of the hand;Orthopedics
+cellulitis or abscess of mouth;Internal Medicine
+eye alignment disorder;Ophthalmology
+headache after lumbar puncture;Internal Medicine
+pyloric stenosis;Internal Medicine
+salivary gland disorder;Internal Medicine
+osteochondrosis;Internal Medicine
+injury to the knee;Internal Medicine
+metabolic disorder;Internal Medicine
+vaginitis;Internal Medicine
+sick sinus syndrome;Internal Medicine
+tinnitus of unknown cause;Internal Medicine
+glaucoma;Internal Medicine
+eating disorder;Internal Medicine
+transient ischemic attack;Internal Medicine
+pyelonephritis;Internal Medicine
+rotator cuff injury;Internal Medicine
+chronic pain disorder;Internal Medicine
+problem during pregnancy;Obstetrics and Gynecology
+liver cancer;Oncology
+atelectasis;Internal Medicine
+injury to the hand;Internal Medicine
+choledocholithiasis;Internal Medicine
+injury to the hip;Internal Medicine
+cirrhosis;Internal Medicine
+thoracic aortic aneurysm;Internal Medicine
+subdural hemorrhage;Internal Medicine
+diabetic retinopathy;Internal Medicine
+fibromyalgia;Internal Medicine
+ischemia of the bowel;Internal Medicine
+fetal alcohol syndrome;Internal Medicine
+peritonitis;Internal Medicine
+injury to the abdomen;Internal Medicine
+acute pancreatitis;Internal Medicine
+thrombophlebitis;Internal Medicine
+asthma;Allergy and Immunology
+foreign body in the vagina;Internal Medicine
+restless leg syndrome;Internal Medicine
+emphysema;Internal Medicine
+cysticercosis;Internal Medicine
+induced abortion;Internal Medicine
+teething syndrome;Internal Medicine
+infectious gastroenteritis;Internal Medicine
+acute sinusitis;Internal Medicine
+substance-related mental disorder;Psychiatry
+postpartum depression;Internal Medicine
+coronary atherosclerosis;Internal Medicine
+spondylitis;Internal Medicine
+pituitary adenoma;Internal Medicine
+uterine fibroids;Internal Medicine
+idiopathic nonmenstrual bleeding;Internal Medicine
+chalazion;Internal Medicine
+ovarian torsion;Internal Medicine
+retinopathy due to high blood pressure;Internal Medicine
+vaginal yeast infection;Infectious Diseases
+mastoiditis;Internal Medicine
+lung contusion;Pulmonology
+hypertrophic obstructive cardiomyopathy (hocm);Cardiology
+ingrown toe nail;Internal Medicine
+pulmonary eosinophilia;Pulmonology
+corneal disorder;Internal Medicine
+foreign body in the gastrointestinal tract;Internal Medicine
+endophthalmitis;Internal Medicine
+intestinal malabsorption;Internal Medicine
+viral warts;Internal Medicine
+hyperhidrosis;Internal Medicine
+stroke;Internal Medicine
+pilonidal cyst;Internal Medicine
+crushing injury;Internal Medicine
+normal pressure hydrocephalus;Internal Medicine
+alopecia;Internal Medicine
+hashimoto thyroiditis;Otolaryngology
+flat feet;Internal Medicine
+nonalcoholic liver disease (nash);Hepatology
+hemarthrosis;Internal Medicine
+pelvic organ prolapse;Internal Medicine
+fracture of the arm;Orthopedics
+coagulation (bleeding) disorder;Internal Medicine
+intracranial hemorrhage;Internal Medicine
+hyperkalemia;Internal Medicine
+cornea infection;Infectious Diseases
+abscess of the lung;Pulmonology
+dengue fever;Internal Medicine
+chronic sinusitis;Internal Medicine
+cholesteatoma;Internal Medicine
+volvulus;Internal Medicine
+injury to the finger;Internal Medicine
+poisoning due to analgesics;Internal Medicine
+atrial fibrillation;Internal Medicine
+pinworm infection;Infectious Diseases
+urethral valves;Internal Medicine
+open wound of the neck;Internal Medicine
+achalasia;Internal Medicine
+conductive hearing loss;Otolaryngology
+abdominal hernia;Internal Medicine
+cerebral palsy;Internal Medicine
+marijuana abuse;Internal Medicine
+cryptococcosis;Internal Medicine
+obesity;Internal Medicine
+indigestion;Internal Medicine
+bursitis;Internal Medicine
+esophageal cancer;Oncology
+pulmonary congestion;Pulmonology
+juvenile rheumatoid arthritis;Internal Medicine
+actinic keratosis;Internal Medicine
+acute otitis media;Internal Medicine
+astigmatism;Internal Medicine
+tuberous sclerosis;Internal Medicine
+empyema;Internal Medicine
+presbyacusis;Internal Medicine
+neonatal jaundice;Internal Medicine
+chronic obstructive pulmonary disease (copd);Pulmonology
+dislocation of the elbow;Internal Medicine
+spondylosis;Internal Medicine
+herpangina;Internal Medicine
+injury to the shoulder;Internal Medicine
+poisoning due to antidepressants;Internal Medicine
+infection of open wound;Infectious Diseases
+deep vein thrombosis (dvt);Internal Medicine
+protein deficiency;Internal Medicine
+myoclonus;Internal Medicine
+bone spur of the calcaneous;Orthopedics
+von willebrand disease;Internal Medicine
+open wound of the back;Internal Medicine
+heart block;Cardiology
+colonic polyp;Internal Medicine
+magnesium deficiency;Internal Medicine
+female infertility of unknown cause;Internal Medicine
+pericarditis;Internal Medicine
+attention deficit hyperactivity disorder (adhd);Internal Medicine
+pulmonic valve disease;Internal Medicine
+tietze syndrome;Internal Medicine
+cranial nerve palsy;Internal Medicine
+injury to the arm;Internal Medicine
+conversion disorder;Internal Medicine
+complex regional pain syndrome;Internal Medicine
+otosclerosis;Otolaryngology
+injury to the trunk;Internal Medicine
+hypothyroidism;Internal Medicine
+primary insomnia;Internal Medicine
+lice;Internal Medicine
+vitamin b12 deficiency;Internal Medicine
+diabetes;Endocrinology
+vulvodynia;Internal Medicine
+endometriosis;Internal Medicine
+vasculitis;Internal Medicine
+concussion;Internal Medicine
+oral leukoplakia;Internal Medicine
+chronic kidney disease;Nephrology
+bladder disorder;Internal Medicine
+chorioretinitis;Internal Medicine
+priapism;Internal Medicine
+myositis;Internal Medicine
+mononucleosis;Internal Medicine
+neuralgia;Internal Medicine
+polycystic kidney disease;Nephrology
+bipolar disorder;Internal Medicine
+amyloidosis;Internal Medicine
+chronic inflammatory demyelinating polyneuropathy (cidp);Internal Medicine
+gastroesophageal reflux disease (gerd);Internal Medicine
+vitreous hemorrhage;Internal Medicine
+poisoning due to antimicrobial drugs;Internal Medicine
+open wound of the mouth;Internal Medicine
+scleroderma;Internal Medicine
+myasthenia gravis;Internal Medicine
+hypoglycemia;Internal Medicine
+idiopathic absence of menstruation;Internal Medicine
+dislocation of the ankle;Internal Medicine
+carbon monoxide poisoning;Internal Medicine
+panic attack;Internal Medicine
+plantar fasciitis;Internal Medicine
+hyperopia;Internal Medicine
+poisoning due to sedatives;Internal Medicine
+pemphigus;Internal Medicine
+peyronie disease;Internal Medicine
+hiatal hernia;Internal Medicine
+extrapyramidal effect of drugs;Internal Medicine
+meniere disease;Internal Medicine
+anal fissure;Internal Medicine
+allergy;Allergy and Immunology
+chronic otitis media;Internal Medicine
+fracture of the finger;Orthopedics
+hirschsprung disease;Internal Medicine
+polymyalgia rheumatica;Internal Medicine
+lymphedema;Internal Medicine
+bladder cancer;Oncology
+acute bronchospasm;Internal Medicine
+acute glaucoma;Internal Medicine
+open wound of the chest;Internal Medicine
+dislocation of the patella;Internal Medicine
+sciatica;Internal Medicine
+hypercalcemia;Internal Medicine
+stress incontinence;Internal Medicine
+varicose veins;Internal Medicine
+benign kidney cyst;Nephrology
+hydrocele of the testicle;Internal Medicine
+degenerative disc disease;Internal Medicine
+hirsutism;Internal Medicine
+dislocation of the foot;Internal Medicine
+hydronephrosis;Internal Medicine
+diverticulosis;Internal Medicine
+pain after an operation;Internal Medicine
+huntington disease;Internal Medicine
+lymphoma;Internal Medicine
+dermatitis due to sun exposure;Dermatology
+anemia due to chronic kidney disease;Nephrology
+injury to internal organ;Internal Medicine
+scleritis;Internal Medicine
+pterygium;Internal Medicine
+fungal infection of the skin;Infectious Diseases
+insulin overdose;Internal Medicine
+syndrome of inappropriate secretion of adh (siadh);Internal Medicine
+foreign body in the ear;Otolaryngology
+premenstrual tension syndrome;Internal Medicine
+orbital cellulitis;Internal Medicine
+injury to the leg;Internal Medicine
+hepatic encephalopathy;Hepatology
+bone cancer;Oncology
+syringomyelia;Internal Medicine
+pulmonary fibrosis;Pulmonology
+mitral valve disease;Internal Medicine
+parkinson disease;Internal Medicine
+gout;Internal Medicine
+otitis media;Internal Medicine
+drug abuse (opioids);Internal Medicine
+myelodysplastic syndrome;Internal Medicine
+fracture of the shoulder;Orthopedics
+acute kidney injury;Nephrology
+threatened pregnancy;Obstetrics and Gynecology
+intracranial abscess;Internal Medicine
+gum disease;Internal Medicine
+open wound from surgical incision;Internal Medicine
+gastrointestinal hemorrhage;Internal Medicine
+seborrheic dermatitis;Dermatology
+drug abuse (methamphetamine);Internal Medicine
+torticollis;Internal Medicine
+poisoning due to antihypertensives;Internal Medicine
+tension headache;Internal Medicine
+alcohol intoxication;Internal Medicine
+scurvy;Internal Medicine
+narcolepsy;Internal Medicine
+food allergy;Allergy and Immunology
+labyrinthitis;Internal Medicine
+anxiety;Internal Medicine
+impulse control disorder;Internal Medicine
+stenosis of the tear duct;Otolaryngology
+abscess of nose;Internal Medicine
+omphalitis;Internal Medicine
+leukemia;Internal Medicine
+bell palsy;Internal Medicine
+conjunctivitis due to allergy;Allergy and Immunology
+drug reaction;Internal Medicine
+adrenal cancer;Oncology
+myopia;Internal Medicine
+osteoarthritis;Internal Medicine
+thyroid disease;Internal Medicine
+pharyngitis;Internal Medicine
+chronic rheumatic fever;Internal Medicine
+hypocalcemia;Internal Medicine
+macular degeneration;Internal Medicine
+pneumonia;Infectious Diseases
+cold sore;Internal Medicine
+premature ventricular contractions (pvcs);Internal Medicine
+testicular cancer;Oncology
+hydrocephalus;Internal Medicine
+breast cancer;Oncology
+anemia due to malignancy;Internal Medicine
+esophageal varices;Internal Medicine
+endometrial cancer;Oncology
+cystic fibrosis;Internal Medicine
+intertrigo (skin condition);Dermatology
+parathyroid adenoma;Internal Medicine
+glucocorticoid deficiency;Internal Medicine
+temporomandibular joint disorder;Internal Medicine
+wilson disease;Internal Medicine
+vesicoureteral reflux;Internal Medicine
+vitamin a deficiency;Internal Medicine
+gonorrhea;Internal Medicine
+fracture of the rib;Orthopedics
+ependymoma;Internal Medicine
+hepatitis due to a toxin;Internal Medicine
+vaginal cyst;Internal Medicine
+open wound of the shoulder;Internal Medicine
+ectopic pregnancy;Obstetrics and Gynecology
+chronic knee pain;Internal Medicine
+pinguecula;Internal Medicine
+hypergammaglobulinemia;Internal Medicine
+alcohol abuse;Internal Medicine
+carpal tunnel syndrome;Internal Medicine
+pituitary disorder;Internal Medicine
+kidney stone;Nephrology
+autism;Internal Medicine
+cat scratch disease;Internal Medicine
+chronic glaucoma;Internal Medicine
+retinal detachment;Internal Medicine
+aplastic anemia;Internal Medicine
+overflow incontinence;Internal Medicine
+hemolytic anemia;Internal Medicine
+lateral epicondylitis (tennis elbow);Internal Medicine
+open wound of the eye;Ophthalmology
+syphilis;Internal Medicine
+diabetic kidney disease;Nephrology
+nose disorder;Internal Medicine
+drug withdrawal;Internal Medicine
+dental caries;Internal Medicine
+hypercholesterolemia;Internal Medicine
+fracture of the patella;Orthopedics
+kidney failure;Nephrology
+fracture of the neck;Orthopedics
+muscle spasm;Internal Medicine
+hemophilia;Internal Medicine
+hyperosmotic hyperketotic state;Internal Medicine
+peritonsillar abscess;Internal Medicine
+gastroparesis;Internal Medicine
+itching of unknown cause;Internal Medicine
+polycythemia vera;Internal Medicine
+thrombocytopenia;Internal Medicine
+head and neck cancer;Oncology
+pseudohypoparathyroidism;Internal Medicine
+goiter;Internal Medicine
+urge incontinence;Internal Medicine
+edward syndrome;Internal Medicine
+open wound of the arm;Internal Medicine
+muscular dystrophy;Internal Medicine
+mittelschmerz;Internal Medicine
+corneal abrasion;Internal Medicine
+anemia of chronic disease;Internal Medicine
+dysthymic disorder;Internal Medicine
+scarlet fever;Internal Medicine
+hypertensive heart disease;Cardiology
+drug abuse (barbiturates);Internal Medicine
+polycystic ovarian syndrome (pcos);Internal Medicine
+encephalitis;Internal Medicine
+cyst of the eyelid;Ophthalmology
+balanitis;Internal Medicine
+foreign body in the throat;Internal Medicine
+drug abuse (cocaine);Internal Medicine
+optic neuritis;Internal Medicine
+alcohol withdrawal;Internal Medicine
+premature atrial contractions (pacs);Internal Medicine
+hemiplegia;Internal Medicine
+hammer toe;Internal Medicine
+open wound of the cheek;Internal Medicine
+joint effusion;Internal Medicine
+open wound of the knee;Internal Medicine
+meningioma;Internal Medicine
+brain cancer;Oncology
+placental abruption;Internal Medicine
+seasonal allergies (hay fever);Internal Medicine
+lung cancer;Oncology
+primary kidney disease;Nephrology
+uterine cancer;Oncology
+dry eye of unknown cause;Ophthalmology
+fibrocystic breast disease;Internal Medicine
+fungal infection of the hair;Infectious Diseases
+tooth abscess;Internal Medicine
+envenomation from spider or animal bite;Internal Medicine
+vacterl syndrome;Internal Medicine
+vertebrobasilar insufficiency;Internal Medicine
+rectal disorder;Internal Medicine
+atonic bladder;Internal Medicine
+benign paroxysmal positional vertical (bppv);Internal Medicine
+blepharospasm;Internal Medicine
+sarcoidosis;Internal Medicine
+metastatic cancer;Oncology
+trigger finger (finger disorder);Internal Medicine
+stye;Internal Medicine
+hemochromatosis;Internal Medicine
+osteochondroma;Internal Medicine
+cushing syndrome;Internal Medicine
+typhoid fever;Internal Medicine
+vitreous degeneration;Internal Medicine
+atrophic skin condition;Dermatology
+aspergillosis;Internal Medicine
+uterine atony;Internal Medicine
+trichinosis;Internal Medicine
+whooping cough;Internal Medicine
+open wound of the lip;Internal Medicine
+subacute thyroiditis;Internal Medicine
+oral mucosal lesion;Internal Medicine
+open wound due to trauma;Internal Medicine
+intracerebral hemorrhage;Internal Medicine
+alzheimer disease;Internal Medicine
+vaginismus;Internal Medicine
+systemic lupus erythematosis (sle);Internal Medicine
+premature ovarian failure;Internal Medicine
+thoracic outlet syndrome;Internal Medicine
+ganglion cyst;Internal Medicine
+dislocation of the knee;Internal Medicine
+crohn disease;Internal Medicine
+postoperative infection;Infectious Diseases
+folate deficiency;Internal Medicine
+fluid overload;Internal Medicine
+atrial flutter;Internal Medicine
+skin disorder;Dermatology
+floaters;Internal Medicine
+tooth disorder;Internal Medicine
+heart attack;Cardiology
+open wound of the abdomen;Internal Medicine
+fracture of the leg;Orthopedics
+oral thrush (yeast infection);Infectious Diseases
+pityriasis rosea;Internal Medicine
+allergy to animals;Allergy and Immunology
+orthostatic hypotension;Internal Medicine
+obstructive sleep apnea (osa);Internal Medicine
+hypokalemia;Internal Medicine
+psoriasis;Internal Medicine
+dislocation of the shoulder;Internal Medicine
+intussusception;Internal Medicine
+cervicitis;Internal Medicine
+abscess of the pharynx;Internal Medicine
+primary thrombocythemia;Internal Medicine
+arthritis of the hip;Internal Medicine
+decubitus ulcer;Internal Medicine
+hypernatremia;Internal Medicine
+sensorineural hearing loss;Otolaryngology
+chronic ulcer;Internal Medicine
+osteoporosis;Internal Medicine
+ileus;Internal Medicine
+sickle cell crisis;Internal Medicine
+urethritis;Internal Medicine
+prostatitis;Internal Medicine
+otitis externa (swimmer's ear);Otolaryngology
+poisoning due to anticonvulsants;Internal Medicine
+testicular torsion;Internal Medicine
+tricuspid valve disease;Internal Medicine
+urethral stricture;Internal Medicine
+vitamin d deficiency;Internal Medicine
+hydatidiform mole;Internal Medicine
+pain disorder affecting the neck;Internal Medicine
+tuberculosis;Internal Medicine
+pelvic fistula;Internal Medicine
+acute bronchiolitis;Internal Medicine
+presbyopia;Internal Medicine
+dementia;Internal Medicine
+insect bite;Internal Medicine
+paroxysmal ventricular tachycardia;Internal Medicine
+congenital heart defect;Cardiology
+connective tissue disorder;Internal Medicine
+foreign body in the eye;Ophthalmology
+poisoning due to gas;Internal Medicine
+pyogenic skin infection;Infectious Diseases
+endometrial hyperplasia;Internal Medicine
+acanthosis nigricans;Internal Medicine
+central atherosclerosis;Internal Medicine
+viral exanthem;Internal Medicine
+noninfectious gastroenteritis;Internal Medicine
+benign prostatic hyperplasia (bph);Internal Medicine
+menopause;Internal Medicine
+primary immunodeficiency;Internal Medicine
+ovarian cancer;Oncology
+cataract;Internal Medicine
+dislocation of the hip;Internal Medicine
+spinal stenosis;Internal Medicine
+intestinal obstruction;Internal Medicine
+heart contusion;Cardiology
+congenital malformation syndrome;Internal Medicine
+sporotrichosis;Internal Medicine
+lymphangitis;Internal Medicine
+wernicke korsakoff syndrome;Internal Medicine
+intestinal disease;Internal Medicine
+acute bronchitis;Internal Medicine
+persistent vomiting of unknown cause;Internal Medicine
+open wound of the foot;Internal Medicine
+myocarditis;Internal Medicine
+preeclampsia;Internal Medicine
+ischemic heart disease;Cardiology
+neurofibromatosis;Internal Medicine
+chickenpox;Internal Medicine
+pancreatic cancer;Oncology
+neuropathy due to drugs;Internal Medicine
+croup;Internal Medicine
+idiopathic excessive menstruation;Internal Medicine
+amblyopia;Internal Medicine
+meckel diverticulum;Internal Medicine
+dislocation of the wrist;Internal Medicine
+ear drum damage;Otolaryngology
+erectile dysfunction;Internal Medicine
+temporary or benign blood in urine;Internal Medicine
+kidney disease due to longstanding hypertension;Nephrology
+chondromalacia of the patella;Internal Medicine
+onychomycosis;Internal Medicine
+urethral disorder;Internal Medicine
+lyme disease;Internal Medicine
+iron deficiency anemia;Internal Medicine
+acute respiratory distress syndrome (ards);Internal Medicine
+toxic multinodular goiter;Internal Medicine
+open wound of the finger;Internal Medicine
+autonomic nervous system disorder;Internal Medicine
+psychosexual disorder;Psychiatry
+anemia;Internal Medicine
+tendinitis;Internal Medicine
+common cold;Internal Medicine
+amyotrophic lateral sclerosis (als);Internal Medicine
+central retinal artery or vein occlusion;Internal Medicine
+paroxysmal supraventricular tachycardia;Internal Medicine
+venous insufficiency;Internal Medicine
+trichomonas infection;Infectious Diseases
+acne;Internal Medicine
+depression;Internal Medicine
+drug abuse;Internal Medicine
+urinary tract obstruction;Internal Medicine
+diabetes insipidus;Endocrinology
+iridocyclitis;Internal Medicine
+varicocele of the testicles;Internal Medicine
+irritable bowel syndrome;Internal Medicine
+fracture of the foot;Orthopedics
+ovarian cyst;Internal Medicine
+chlamydia;Internal Medicine
+parasitic disease;Internal Medicine
+fracture of the jaw;Orthopedics
+lipoma;Internal Medicine
+female genitalia infection;Infectious Diseases
+pulmonary hypertension;Pulmonology
+thyroid nodule;Internal Medicine
+broken tooth;Internal Medicine
+dumping syndrome;Internal Medicine
+lymphadenitis;Internal Medicine
+injury to the face;Internal Medicine
+aortic valve disease;Internal Medicine
+rheumatoid arthritis;Internal Medicine
+spermatocele;Internal Medicine
+impetigo;Internal Medicine
+anal fistula;Internal Medicine
+hypothermia;Internal Medicine
+oppositional disorder;Internal Medicine
+migraine;Internal Medicine
+diabetic peripheral neuropathy;Internal Medicine
+testicular disorder;Internal Medicine
+gestational diabetes;Endocrinology
+hidradenitis suppurativa;Internal Medicine
+valley fever;Internal Medicine
+conjunctivitis due to bacteria;Internal Medicine
+lewy body dementia;Internal Medicine
+multiple myeloma;Internal Medicine
+head injury;Internal Medicine
+ascending cholangitis;Internal Medicine
+idiopathic irregular menstrual cycle;Internal Medicine
+interstitial lung disease;Pulmonology
+mononeuritis;Internal Medicine
+malaria;Internal Medicine
+somatization disorder;Internal Medicine
+hypovolemia;Internal Medicine
+schizophrenia;Internal Medicine
+knee ligament or meniscus tear;Otolaryngology
+endocarditis;Internal Medicine
+sepsis;Internal Medicine
+heat stroke;Internal Medicine
+cholecystitis;Internal Medicine
+cardiac arrest;Internal Medicine
+cardiomyopathy;Cardiology
+social phobia;Internal Medicine
+meningitis;Internal Medicine
+spherocytosis;Internal Medicine
+hormone disorder;Internal Medicine
+raynaud disease;Internal Medicine
+reactive arthritis;Internal Medicine
+scabies;Internal Medicine
+ear wax impaction;Otolaryngology
+hypertension of pregnancy;Obstetrics and Gynecology
+peripheral arterial embolism;Internal Medicine
+rosacea;Internal Medicine
+fracture of the skull;Orthopedics
+uveitis;Internal Medicine
+fracture of the facial bones;Orthopedics
+tracheitis;Internal Medicine
+jaw disorder;Internal Medicine
+perirectal infection;Infectious Diseases
+breast cyst;Internal Medicine
+post-traumatic stress disorder (ptsd);Internal Medicine
+kidney cancer;Oncology
+vulvar cancer;Oncology
+blepharitis;Internal Medicine
+celiac disease;Internal Medicine
+cystitis;Internal Medicine
+sickle cell anemia;Internal Medicine
+subconjunctival hemorrhage;Internal Medicine
+hemorrhoids;Internal Medicine
+contact dermatitis;Dermatology
+sinus bradycardia;Internal Medicine
+high blood pressure;Internal Medicine
+pelvic inflammatory disease;Internal Medicine
+liver disease;Hepatology
+chronic constipation;Internal Medicine
+thyroid cancer;Oncology
+flu;Internal Medicine
+friedrich ataxia;Internal Medicine
+tic (movement) disorder;Internal Medicine
+skin polyp;Dermatology
+brachial neuritis;Internal Medicine
+cervical cancer;Oncology
+adrenal adenoma;Nephrology
+esophagitis;Internal Medicine
+gas gangrene;Internal Medicine
+yeast infection;Infectious Diseases
+spina bifida;Internal Medicine
+drug poisoning due to medication;Internal Medicine
+alcoholic liver disease;Hepatology
+malignant hypertension;Internal Medicine
+diverticulitis;Internal Medicine
+moyamoya disease;Internal Medicine
+heat exhaustion;Internal Medicine
+psychotic disorder;Psychiatry
+frostbite;Internal Medicine
+atrophy of the corpus cavernosum;Internal Medicine
+smoking or tobacco addiction;Internal Medicine
+sprain or strain;Internal Medicine
+essential tremor;Internal Medicine
+open wound of the ear;Otolaryngology
+foreign body in the nose;Internal Medicine
+idiopathic painful menstruation;Internal Medicine
+down syndrome;Internal Medicine
+idiopathic infrequent menstruation;Internal Medicine
+pneumothorax;Internal Medicine
+de quervain disease;Internal Medicine
+fracture of the vertebra;Orthopedics
+human immunodeficiency virus infection (hiv);Infectious Diseases
+mumps;Internal Medicine
+subarachnoid hemorrhage;Internal Medicine
+acute fatty liver of pregnancy (aflp);Hepatology
+ectropion;Internal Medicine
+scar;Internal Medicine
+lactose intolerance;Internal Medicine
+eustachian tube dysfunction (ear disorder);Otolaryngology
+appendicitis;Internal Medicine
+graves disease;Internal Medicine
+dissociative disorder;Internal Medicine
+open wound of the face;Internal Medicine
+dislocation of the vertebra;Internal Medicine
+phimosis;Internal Medicine
+hyperemesis gravidarum;Internal Medicine
+pregnancy;Obstetrics and Gynecology
+thalassemia;Internal Medicine
+placenta previa;Internal Medicine
+epidural hemorrhage;Internal Medicine
+septic arthritis;Internal Medicine
+athlete's foot;Internal Medicine
+pleural effusion;Internal Medicine
+aphakia;Internal Medicine
+vulvar disorder;Internal Medicine
+sialoadenitis;Internal Medicine
+gynecomastia;Internal Medicine
+urinary tract infection;Infectious Diseases
+histoplasmosis;Internal Medicine
+erythema multiforme;Internal Medicine
+scoliosis;Internal Medicine
+bunion;Internal Medicine
+arrhythmia;Internal Medicine
+trigeminal neuralgia;Internal Medicine
+ankylosing spondylitis;Internal Medicine
+peripheral nerve disorder;Internal Medicine
+sebaceous cyst;Internal Medicine
+poisoning due to antipsychotics;Psychiatry
+neurosis;Internal Medicine
+prostate cancer;Oncology
+cerebral edema;Internal Medicine
+dislocation of the finger;Internal Medicine
+birth trauma;Internal Medicine
+chronic pancreatitis;Internal Medicine
+hematoma;Internal Medicine
+carcinoid syndrome;Internal Medicine
+open wound of the head;Internal Medicine
+seborrheic keratosis;Internal Medicine
+burn;Internal Medicine
+spontaneous abortion;Internal Medicine
+genital herpes;Internal Medicine
+adjustment reaction;Internal Medicine
+gallstone;Internal Medicine
+multiple sclerosis;Internal Medicine
+zenker diverticulum;Internal Medicine
+fracture of the pelvis;Orthopedics
+pneumoconiosis;Internal Medicine
+hyperlipidemia;Internal Medicine
+ulcerative colitis;Internal Medicine
+male genitalia infection;Infectious Diseases
+hpv;Internal Medicine
+angina;Internal Medicine
+injury to the spinal cord;Internal Medicine
+nasal polyp;Internal Medicine
+lichen simplex;Internal Medicine
+trichiasis;Internal Medicine
+acariasis;Internal Medicine
+colorectal cancer;Oncology
+skin pigmentation disorder;Dermatology
+factitious disorder;Internal Medicine
+lymphogranuloma venereum;Internal Medicine
+galactorrhea of unknown cause;Internal Medicine
+g6pd enzyme deficiency;Internal Medicine
+nerve impingement near the shoulder;Otolaryngology
+toxoplasmosis;Internal Medicine
+fibroadenoma;Internal Medicine
+open wound of the hand;Internal Medicine
+missed abortion;Internal Medicine
+diabetic ketoacidosis;Internal Medicine
+granuloma inguinale;Internal Medicine
+obsessive compulsive disorder (ocd);Internal Medicine
+injury of the ankle;Internal Medicine
+hyponatremia;Internal Medicine
+stricture of the esophagus;Internal Medicine
+fracture of the ankle;Orthopedics
+soft tissue sarcoma;Internal Medicine
+bone disorder;Orthopedics
+epilepsy;Internal Medicine
+personality disorder;Internal Medicine
+shingles (herpes zoster);Internal Medicine
+tourette syndrome;Internal Medicine
+avascular necrosis;Internal Medicine
+strep throat;Internal Medicine
+spinocerebellar ataxia;Internal Medicine
+osteomyelitis;Internal Medicine
+sjogren syndrome;Internal Medicine
+adhesive capsulitis of the shoulder;Internal Medicine
+viral hepatitis;Internal Medicine
+tonsillar hypertrophy;Internal Medicine
+gastritis;Internal Medicine
+skin cancer;Oncology
+rheumatic fever;Internal Medicine
+aphthous ulcer;Internal Medicine
+tonsillitis;Internal Medicine
+intestinal cancer;Oncology
+rocky mountain spotted fever;Internal Medicine
+stomach cancer;Oncology
+developmental disability;Psychiatry
+acute stress reaction;Internal Medicine
+delirium;Internal Medicine
+callus;Internal Medicine
+guillain barre syndrome;Internal Medicine
+lumbago;Internal Medicine
+deviated nasal septum;Internal Medicine
+hemangioma;Internal Medicine
+peripheral arterial disease;Internal Medicine
+chronic back pain;Internal Medicine
+heart failure;Cardiology
+conjunctivitis;Internal Medicine
+herniated disk;Internal Medicine
+rhabdomyolysis;Internal Medicine
+breast infection (mastitis);Infectious Diseases
+abdominal aortic aneurysm;Internal Medicine
+pulmonary embolism;Pulmonology
+conduct disorder;Internal Medicine
+mastectomy;Internal Medicine
+epididymitis;Internal Medicine
+premature rupture of amniotic membrane;Internal Medicine
+molluscum contagiosum;Internal Medicine
+necrotizing fasciitis;Internal Medicine
+benign vaginal discharge (leukorrhea);Internal Medicine
+bladder obstruction;Internal Medicine
+melanoma;Internal Medicine
+cervical disorder;Internal Medicine
+laryngitis;Internal Medicine
+dyshidrosis;Internal Medicine
+poisoning due to opioids;Internal Medicine
+diaper rash;Internal Medicine
+lichen planus;Internal Medicine
+gastroduodenal ulcer;Internal Medicine
+inguinal hernia;Internal Medicine
+eczema;Internal Medicine
+asperger syndrome;Internal Medicine
+mucositis;Internal Medicine
+paronychia;Internal Medicine
+open wound of the jaw;Internal Medicine
+white blood cell disease;Internal Medicine
+kaposi sarcoma;Internal Medicine
+spondylolisthesis;Internal Medicine
+pseudotumor cerebri;Internal Medicine
+conjunctivitis due to virus;Internal Medicine
+open wound of the nose;Internal Medicine
