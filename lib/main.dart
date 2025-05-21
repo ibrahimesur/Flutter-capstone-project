@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
 import 'screens/doctor_panel/doctor_panel_screen.dart';
 import 'screens/semptom_tarama_screen.dart';
 import 'screens/randevu_ayarlama_screen.dart';
@@ -24,10 +25,11 @@ class HealthApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sağlık Yönetim Sistemi',
       debugShowCheckedModeBanner: false,
-      initialRoute: '/',
+      initialRoute: '/login',
       routes: {
         '/': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
         '/doctor-panel': (context) => const DoctorPanelScreen(),
         '/semptom-tarama': (context) => Scaffold(
               appBar: AppBar(title: Text('Semptom Tarama')),

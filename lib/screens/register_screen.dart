@@ -2,24 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
   bool _isDoctor = false;
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Üye Ol'),
+        backgroundColor: HealthApp.accentColor,
+      ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
@@ -28,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Hoş Geldiniz',
+                  'Hesap Oluştur',
                   style: GoogleFonts.poppins(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -38,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Devam etmek için giriş yapın',
+                  'Sağlık hizmetlerine erişmek için üye olun',
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 16,
@@ -46,6 +52,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Ad Soyad',
+                    prefixIcon: Icon(Icons.person),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Ad Soyad gerekli';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
@@ -55,6 +75,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'E-posta gerekli';
+                    }
+                    if (!value.contains('@')) {
+                      return 'Geçerli bir e-posta adresi girin';
                     }
                     return null;
                   },
@@ -71,6 +94,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Şifre gerekli';
                     }
+                    if (value.length < 6) {
+                      return 'Şifre en az 6 karakter olmalı';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  decoration: const InputDecoration(
+                    labelText: 'Şifre Tekrar',
+                    prefixIcon: Icon(Icons.lock_outline),
+                  ),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Şifre tekrarı gerekli';
+                    }
+                    if (value != _passwordController.text) {
+                      return 'Şifreler eşleşmiyor';
+                    }
                     return null;
                   },
                 ),
@@ -85,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         });
                       },
                     ),
-                    const Text('Doktor olarak giriş yap'),
+                    const Text('Doktor olarak kayıt ol'),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -100,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Text(
-                      'Giriş Yap',
+                      'Üye Ol',
                       style: TextStyle(fontSize: 16),
                     ),
                   ),
@@ -110,14 +154,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Hesabınız yok mu?',
+                      'Zaten hesabınız var mı?',
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/register');
+                        Navigator.pop(context);
                       },
-                      child: const Text('Üye Olun'),
+                      child: const Text('Giriş Yapın'),
                     ),
                   ],
                 ),
@@ -131,8 +175,10 @@ class _LoginScreenState extends State<LoginScreen> {
   
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 } 
