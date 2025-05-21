@@ -5,7 +5,6 @@ import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/doctor_panel/doctor_panel_screen.dart';
 import 'screens/semptom_tarama_screen.dart';
-import 'screens/randevu_ayarlama_screen.dart';
 
 void main() {
   runApp(const HealthApp());
@@ -35,11 +34,6 @@ class HealthApp extends StatelessWidget {
               appBar: AppBar(title: Text('Semptom Tarama')),
               body: SemptomTaramaScreen(),
             ),
-        '/randevu-ayarlama': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
-          final department = args?['department'] ?? '';
-          return RandevuAyarlamaScreen(department: department);
-        },
       },
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -93,7 +87,7 @@ class HealthApp extends StatelessWidget {
           prefixIconColor: primaryColor,
         ),
         chipTheme: const ChipThemeData(
-          backgroundColor: Colors.white, // secondaryColor.withOpacity(0.3)
+          backgroundColor: Color(0xFFBFD4E8), // secondaryColor.withOpacity(0.3)
           selectedColor: primaryColor,
           labelStyle: TextStyle(color: primaryColor),
         ),
