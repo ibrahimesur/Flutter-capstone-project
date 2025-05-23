@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -13,6 +15,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isDoctor = false;
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _tcKimlikNoController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -67,16 +70,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  controller: _tcKimlikNoController,
+                  decoration: const InputDecoration(
+                    labelText: 'TC Kimlik No',
+                    prefixIcon: Icon(Icons.badge),
+                  ),
+                  keyboardType: TextInputType.number,
+                  maxLength: 11,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'TC Kimlik No gerekli';
+                    }
+                    if (value.length != 11) {
+                      return 'TC Kimlik No 11 haneli olmalıdır';
+                    }
+                    if (!RegExp(r'^[0-9]+').hasMatch(value)) {
+                      return 'TC Kimlik No sadece rakamlardan oluşmalıdır';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
                     labelText: 'E-posta',
                     prefixIcon: Icon(Icons.email),
                   ),
+                  keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'E-posta gerekli';
                     }
-                    if (!value.contains('@')) {
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(value)) {
                       return 'Geçerli bir e-posta adresi girin';
                     }
                     return null;
@@ -129,16 +156,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         });
                       },
                     ),
-                    const Text('Doktor olarak kayıt ol'),
+                    const Expanded(child: Text('Doktor olarak kayıt ol')),
                   ],
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () {
-                    if (_isDoctor) {
-                      Navigator.pushReplacementNamed(context, '/doctor-panel');
-                    } else {
-                      Navigator.pushReplacementNamed(context, '/');
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      await _registerUser();
                     }
                   },
                   child: const Padding(
@@ -172,13 +197,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
-  
+
+  Future<void> _registerUser() async {
+    const String apiUrl = 'http://127.0.0.1:8000/register';
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'tc_kimlik_no': _tcKimlikNoController.text,
+          'email': _emailController.text,
+          'password': _passwordController.text,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Kullanıcı başarıyla kaydedildi! Giriş sayfasına yönlendiriliyorsunuz...'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Future.delayed(const Duration(seconds: 2), () {
+          Navigator.pop(context);
+        });
+      } else {
+        final responseData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Kayıt başarısız: ${responseData['message'] ?? 'Bir hata oluştu'}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Kayıt sırasında bir hata oluştu: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
+    _tcKimlikNoController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
-} 
+}

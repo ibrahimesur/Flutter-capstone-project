@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import '../models/randevu.dart';
+import '../services/randevu.dart';
 
 class RandevuAyarlamaScreen extends StatefulWidget {
   final String department;
-  const RandevuAyarlamaScreen({Key? key, required this.department}) : super(key: key);
+  const RandevuAyarlamaScreen({Key? key, required this.department})
+      : super(key: key);
 
   @override
   State<RandevuAyarlamaScreen> createState() => _RandevuAyarlamaScreenState();
@@ -47,7 +48,8 @@ class _RandevuAyarlamaScreenState extends State<RandevuAyarlamaScreen> {
   void initState() {
     super.initState();
     // Eğer yönlendirilerek gelindiyse departmanı otomatik seç
-    if (widget.department.isNotEmpty && departmentDoctors.containsKey(widget.department)) {
+    if (widget.department.isNotEmpty &&
+        departmentDoctors.containsKey(widget.department)) {
       selectedDepartment = widget.department;
     }
   }
@@ -77,7 +79,8 @@ class _RandevuAyarlamaScreenState extends State<RandevuAyarlamaScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Randevu Bilgileri', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+              Text('Randevu Bilgileri',
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
               SizedBox(height: 24),
               // Bölüm seçimi
               DropdownButtonFormField<String>(
@@ -85,12 +88,15 @@ class _RandevuAyarlamaScreenState extends State<RandevuAyarlamaScreen> {
                 decoration: InputDecoration(
                   labelText: 'Bölüm Seçiniz',
                   prefixIcon: Icon(Icons.local_hospital),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16)),
                 ),
-                items: departmentDoctors.keys.map((dep) => DropdownMenuItem(
-                  value: dep,
-                  child: Text(dep),
-                )).toList(),
+                items: departmentDoctors.keys
+                    .map((dep) => DropdownMenuItem(
+                          value: dep,
+                          child: Text(dep),
+                        ))
+                    .toList(),
                 onChanged: (val) {
                   setState(() {
                     selectedDepartment = val;
@@ -105,13 +111,16 @@ class _RandevuAyarlamaScreenState extends State<RandevuAyarlamaScreen> {
                 decoration: InputDecoration(
                   labelText: 'Doktor Seçiniz',
                   prefixIcon: Icon(Icons.person),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16)),
                 ),
                 items: (selectedDepartment != null)
-                    ? departmentDoctors[selectedDepartment]!.map((doc) => DropdownMenuItem(
-                        value: doc,
-                        child: Text(doc),
-                      )).toList()
+                    ? departmentDoctors[selectedDepartment]!
+                        .map((doc) => DropdownMenuItem(
+                              value: doc,
+                              child: Text(doc),
+                            ))
+                        .toList()
                     : [],
                 onChanged: (val) {
                   setState(() {
@@ -126,7 +135,9 @@ class _RandevuAyarlamaScreenState extends State<RandevuAyarlamaScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       icon: Icon(Icons.calendar_today),
-                      label: Text(selectedDate == null ? 'Tarih Seç' : '${selectedDate!.day}.${selectedDate!.month}.${selectedDate!.year}'),
+                      label: Text(selectedDate == null
+                          ? 'Tarih Seç'
+                          : '${selectedDate!.day}.${selectedDate!.month}.${selectedDate!.year}'),
                       onPressed: () async {
                         final now = DateTime.now();
                         final picked = await showDatePicker(
@@ -144,7 +155,8 @@ class _RandevuAyarlamaScreenState extends State<RandevuAyarlamaScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF2C3E50),
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
                         padding: EdgeInsets.symmetric(vertical: 18),
                       ),
                     ),
@@ -153,7 +165,8 @@ class _RandevuAyarlamaScreenState extends State<RandevuAyarlamaScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       icon: Icon(Icons.access_time),
-                      label: Text(selectedTime == null ? 'Saat Seç' : selectedTime!),
+                      label: Text(
+                          selectedTime == null ? 'Saat Seç' : selectedTime!),
                       onPressed: (selectedDoctor == null)
                           ? null
                           : () async {
@@ -165,7 +178,8 @@ class _RandevuAyarlamaScreenState extends State<RandevuAyarlamaScreen> {
                                   children: times
                                       .map((t) => SimpleDialogOption(
                                             child: Text(t),
-                                            onPressed: () => Navigator.pop(context, t),
+                                            onPressed: () =>
+                                                Navigator.pop(context, t),
                                           ))
                                       .toList(),
                                 ),
@@ -179,7 +193,8 @@ class _RandevuAyarlamaScreenState extends State<RandevuAyarlamaScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF2C3E50),
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
                         padding: EdgeInsets.symmetric(vertical: 18),
                       ),
                     ),
@@ -191,7 +206,10 @@ class _RandevuAyarlamaScreenState extends State<RandevuAyarlamaScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: (selectedDepartment != null && selectedDoctor != null && selectedDate != null && selectedTime != null)
+                  onPressed: (selectedDepartment != null &&
+                          selectedDoctor != null &&
+                          selectedDate != null &&
+                          selectedTime != null)
                       ? () {
                           globalRandevuList.add(Randevu(
                             department: selectedDepartment!,
@@ -199,16 +217,20 @@ class _RandevuAyarlamaScreenState extends State<RandevuAyarlamaScreen> {
                             date: selectedDate!,
                             time: selectedTime!,
                           ));
-                          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                          Navigator.pushNamedAndRemoveUntil(
+                              context, '/', (route) => false);
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF2C3E50),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
                     padding: EdgeInsets.symmetric(vertical: 22),
                   ),
-                  child: Text('Randevu Al', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  child: Text('Randevu Al',
+                      style:
+                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -217,4 +239,4 @@ class _RandevuAyarlamaScreenState extends State<RandevuAyarlamaScreen> {
       ),
     );
   }
-} 
+}

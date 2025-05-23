@@ -5,7 +5,7 @@ import 'doctor_panel/doctor_panel_screen.dart';
 import 'hospital_panel/hospital_panel_screen.dart';
 import 'dart:async';
 import '../services/semptom_service.dart';
-import '../models/randevu.dart';
+import '../services/randevu.dart';
 import 'randevu_ayarlama_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -725,15 +725,17 @@ class _RandevuPageState extends State<RandevuPage> {
                     child: ListView(
                       children: [
                         ...globalRandevuList.map((randevu) => Card(
-                          margin: EdgeInsets.symmetric(vertical: 8),
-                          child: ListTile(
-                            leading: Icon(Icons.event_available, color: Colors.blue),
-                            title: Text('${randevu.department} - ${randevu.doctor}'),
-                            subtitle: Text(
-                              '${randevu.date.day}.${randevu.date.month}.${randevu.date.year} - ${randevu.time}',
-                            ),
-                          ),
-                        )),
+                              margin: EdgeInsets.symmetric(vertical: 8),
+                              child: ListTile(
+                                leading: Icon(Icons.event_available,
+                                    color: Colors.blue),
+                                title: Text(
+                                    '${randevu.department} - ${randevu.doctor}'),
+                                subtitle: Text(
+                                  '${randevu.date.day}.${randevu.date.month}.${randevu.date.year} - ${randevu.time}',
+                                ),
+                              ),
+                            )),
                       ],
                     ),
                   ),
