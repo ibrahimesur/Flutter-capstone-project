@@ -184,11 +184,13 @@ def register():
     if not tc_kimlik_no or not email or not password:
         return jsonify({'message':'TC Kimlik No, e-posta ve şifre gerekli'}),400
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    # BYTEA yerine VARCHAR olduğu için hash'i stringe çevirerek kaydediyoruz.
+    hashed_string = hashed.decode('utf-8')
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute('INSERT INTO users (tc_kimlik_no,email,password_hash) VALUES (%s,%s,%s) RETURNING id',
-                    (tc_kimlik_no,email,hashed))
+                    (tc_kimlik_no,email,hashed_string))
         user_id = cur.fetchone()[0]
         conn.commit()
         return jsonify({'message':'Kullanıcı kaydedildi','user_id':str(user_id)}),201
@@ -217,15 +219,47 @@ def login():
         cur = conn.cursor()
         cur.execute('SELECT id,password_hash FROM users WHERE tc_kimlik_no=%s',(tc,))
         user = cur.fetchone()
-        if not user or not bcrypt.checkpw(pw.encode('utf-8'), user[1].tobytes()):
+        if user:
+            logger.info('Veritabanından çekilen şifre hash: %s (Tip: %s)', user[1], type(user[1]))
+
+            # bcrypt.checkpw bytes bekler, veritabanından gelen stringi encode ediyoruz.
+            # Eğer user[1] veritabanından byte dizisi olarak geldiyse ve psycopg2 stringe çevirdiyse,
+            # bu stringin içeriği \x ile başlayan hex gösterimi olacaktır.
+            # Doğru karşılaştırma için bu stringi tekrar byte dizisine çevirmemiz gerekebilir.
+            # Ancak önceki denemeler syntax hatasına neden oldu.
+            # Veritabanından gelen değerin doğrudan bcrypt'in anlayacağı formatta string veya bytes olduğundan emin olmak en iyisidir.
+            # Geçici olarak, eğer string geliyorsa encode etmeyi deneyelim, byte geliyorsa direkt kullanalım.
+            hashed_password_for_check = None
+            if isinstance(user[1], str):
+                 # String ise encode et
+                 hashed_password_for_check = user[1].encode('utf-8')
+            elif isinstance(user[1], bytes):
+                 # Zaten bytes ise direkt kullan
+                 hashed_password_for_check = user[1]
+            else:
+                # Beklenmedik tip
+                logger.error('Beklenmedik şifre hash tipi: %s', type(user[1]))
+                return jsonify({'message':'Giriş hatası', 'error':'Beklenmedik şifre hash formatı.'}), 500
+
+
+        if not user or not bcrypt.checkpw(pw.encode('utf-8'), hashed_password_for_check):
             return jsonify({'message':'Geçersiz kimlik veya şifre'}),401
+        
         token = jwt.encode({'user_id':str(user[0]),'exp':datetime.datetime.utcnow()+datetime.timedelta(hours=24)},
                            app.config['SECRET_KEY'],algorithm='HS256')
         return jsonify({'message':'Giriş başarılı','token':token}),200
+    except psycopg2.OperationalError as e:
+        logger.error('Veritabanı bağlantı veya işlem hatası: %s', e, exc_info=True)
+        return jsonify({'message':'Giriş hatası', 'error':'Veritabanı bağlantı veya işlem hatası.'}),500
     except Exception as e:
-        return jsonify({'message':'Giriş hatası','error':str(e)}),500
+        logger.error('Beklenmedik giriş hatası: %s', e, exc_info=True)
+        return jsonify({'message':'Giriş hatası','error':'Beklenmedik sunucu hatası.'}),500
     finally:
-        cur.close();conn.close()
+        # Bağlantıyı kapat
+        if 'cur' in locals() and cur is not None:
+             cur.close()
+        if 'conn' in locals() and conn is not None:
+             conn.close()
 
 if __name__ == '__main__':
     logger.info('Sunucu başlatılıyor…')

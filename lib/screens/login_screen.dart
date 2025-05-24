@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,6 +16,65 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  Future<void> _login() async {
+    if (_formKey.currentState!.validate()) {
+      final url = Uri.parse(
+          'http://127.0.0.1:8000/login'); // Backend URL'nizi buraya girin
+      try {
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({
+            'tc_kimlik_no':
+                _emailController.text, // TC Kimlik No alanını kullanıyoruz
+            'password': _passwordController.text,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          // Giriş başarılı
+          final responseData = json.decode(response.body);
+          print('Giriş başarılı: ${responseData['message']}');
+          // Yönlendirme
+          if (_isDoctor) {
+            Navigator.pushReplacementNamed(context, '/doctor-panel');
+          } else {
+            Navigator.pushReplacementNamed(context, '/');
+          }
+        } else if (response.statusCode == 401) {
+          // Geçersiz kimlik bilgileri
+          final responseData = json.decode(response.body);
+          print('Giriş başarısız: ${responseData['message']}');
+          // Kullanıcıya hata mesajı gösterme (örneğin bir SnackBar ile)
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(responseData['message']),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else {
+          // Diğer hatalar
+          print('Sunucu hatası: ${response.statusCode}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Bir hata oluştu. Lütfen tekrar deneyin.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        // Ağ veya diğer hatalar
+        print('Hata oluştu: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bağlantı hatası. Lütfen daha sonra tekrar deneyin.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
-                    labelText: 'E-posta',
+                    labelText: 'Kimlik No',
                     prefixIcon: Icon(Icons.email),
                   ),
                   validator: (value) {
@@ -90,13 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () {
-                    if (_isDoctor) {
-                      Navigator.pushReplacementNamed(context, '/doctor-panel');
-                    } else {
-                      Navigator.pushReplacementNamed(context, '/');
-                    }
-                  },
+                  onPressed: _login,
                   child: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Text(
@@ -128,11 +183,11 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-  
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
-} 
+}

@@ -19,7 +19,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 532 123 4567',
       'email': 'mehmet.oz@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/male_doctor.png',
       'joinDate': '12 Ocak 2020',
       'schedule': 'Pazartesi-Cuma 09:00-17:00',
       'specialization': 'Kalp Cerrahisi',
@@ -32,7 +31,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 532 234 5678',
       'email': 'ayse.yilmaz@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/female_nurse.png',
       'joinDate': '5 Şubat 2019',
       'schedule': 'Pazartesi-Cumartesi 08:00-16:00',
       'specialization': 'Yoğun Bakım',
@@ -45,7 +43,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 532 345 6789',
       'email': 'zeynep.kaya@hastane.com',
       'status': 'İzinli',
-      'imageUrl': 'assets/images/staff/female_doctor.png',
       'joinDate': '20 Mart 2021',
       'schedule': 'Salı-Cumartesi 10:00-18:00',
       'specialization': 'Beyin ve Sinir Cerrahisi',
@@ -58,7 +55,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 532 456 7890',
       'email': 'ahmet.demir@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/male_technician.png',
       'joinDate': '15 Nisan 2022',
       'schedule': 'Pazartesi-Cuma 08:00-16:00',
       'specialization': 'MR ve Tomografi',
@@ -72,7 +68,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 533 567 8901',
       'email': 'emre.yildiz@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/male_doctor.png',
       'joinDate': '3 Haziran 2021',
       'schedule': 'Pazartesi-Cuma 09:00-17:00',
       'specialization': 'Aritmiler',
@@ -85,7 +80,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 537 678 9012',
       'email': 'deniz.sahin@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/female_nurse.png',
       'joinDate': '10 Mayıs 2020',
       'schedule': 'Pazartesi-Cumartesi 08:00-16:00',
       'specialization': 'Kardiyak Bakım',
@@ -99,7 +93,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 535 789 0123',
       'email': 'selin.aydin@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/female_doctor.png',
       'joinDate': '5 Ocak 2018',
       'schedule': 'Salı-Cumartesi 09:00-17:00',
       'specialization': 'Çocuk Alerjisi',
@@ -112,7 +105,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 538 890 1234',
       'email': 'kemal.tekin@hastane.com',
       'status': 'İzinli',
-      'imageUrl': 'assets/images/staff/male_doctor.png',
       'joinDate': '20 Şubat 2019',
       'schedule': 'Pazartesi-Cuma 09:00-17:00',
       'specialization': 'Yenidoğan',
@@ -125,7 +117,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 536 901 2345',
       'email': 'ceyda.kartal@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/female_nurse.png',
       'joinDate': '15 Mart 2020',
       'schedule': 'Pazartesi-Cumartesi 08:00-16:00',
       'specialization': 'Çocuk Yoğun Bakım',
@@ -139,7 +130,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 534 012 3456',
       'email': 'ali.yilmaz@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/male_doctor.png',
       'joinDate': '10 Nisan 2017',
       'schedule': 'Pazartesi-Cuma 09:00-18:00',
       'specialization': 'Mide-Bağırsak Cerrahisi',
@@ -152,7 +142,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 539 123 4567',
       'email': 'banu.korkmaz@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/female_doctor.png',
       'joinDate': '20 Mayıs 2018',
       'schedule': 'Salı-Cumartesi 08:30-17:30',
       'specialization': 'Meme Cerrahisi',
@@ -166,7 +155,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 532 234 5678',
       'email': 'serkan.demir@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/male_doctor.png',
       'joinDate': '15 Haziran 2019',
       'schedule': 'Pazartesi-Cuma 09:00-17:00',
       'specialization': 'Spor Yaralanmaları',
@@ -179,7 +167,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 532 345 6789',
       'email': 'ece.ozturk@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/female_doctor.png',
       'joinDate': '1 Temmuz 2020',
       'schedule': 'Pazartesi-Cumartesi 09:00-17:00',
       'specialization': 'Kas İskelet Sistemi Rehabilitasyonu',
@@ -193,7 +180,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 532 456 7890',
       'email': 'melih.candan@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/male_doctor.png',
       'joinDate': '10 Ağustos 2021',
       'schedule': 'Pazartesi-Cuma 09:00-16:30',
       'specialization': 'Katarakt Cerrahisi',
@@ -207,7 +193,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 532 567 8901',
       'email': 'murat.kaya@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/male_admin.png',
       'joinDate': '5 Ocak 2015',
       'schedule': 'Pazartesi-Cuma 08:30-17:30',
       'specialization': 'Sağlık Yönetimi',
@@ -220,7 +205,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 532 678 9012',
       'email': 'sevda.yildirim@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/female_admin.png',
       'joinDate': '3 Şubat 2017',
       'schedule': 'Pazartesi-Cuma 08:30-17:30',
       'specialization': 'İnsan Kaynakları Yönetimi',
@@ -234,7 +218,6 @@ class _StaffTabState extends State<StaffTab> {
       'phone': '+90 532 789 0123',
       'email': 'leyla.yalcin@hastane.com',
       'status': 'Aktif',
-      'imageUrl': 'assets/images/staff/female_doctor.png',
       'joinDate': '12 Mart 2018',
       'schedule': 'Pazartesi-Cuma 08:00-16:00',
       'specialization': 'Klinik Biyokimya',
@@ -277,16 +260,22 @@ class _StaffTabState extends State<StaffTab> {
     setState(() {
       _filteredStaffList = _staffList.where((staff) {
         // İsim veya pozisyona göre arama
-        final nameMatches = staff['name'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            staff['position'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
+        final nameMatches = staff['name']
+                .toString()
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()) ||
+            staff['position']
+                .toString()
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase());
 
         // Departman filtresi
         final departmentMatches = _selectedDepartment == 'Tümü' ||
             staff['department'] == _selectedDepartment;
 
         // Durum filtresi
-        final statusMatches = _selectedStatus == 'Tümü' ||
-            staff['status'] == _selectedStatus;
+        final statusMatches =
+            _selectedStatus == 'Tümü' || staff['status'] == _selectedStatus;
 
         return nameMatches && departmentMatches && statusMatches;
       }).toList();
@@ -442,7 +431,9 @@ class _StaffTabState extends State<StaffTab> {
           Icon(Icons.people, size: 100, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            _searchQuery.isEmpty && _selectedDepartment == 'Tümü' && _selectedStatus == 'Tümü'
+            _searchQuery.isEmpty &&
+                    _selectedDepartment == 'Tümü' &&
+                    _selectedStatus == 'Tümü'
                 ? 'Henüz personel kaydı bulunmuyor'
                 : 'Arama kriterlerine uygun personel bulunamadı',
             style: TextStyle(
@@ -451,7 +442,9 @@ class _StaffTabState extends State<StaffTab> {
             ),
             textAlign: TextAlign.center,
           ),
-          if (_searchQuery.isNotEmpty || _selectedDepartment != 'Tümü' || _selectedStatus != 'Tümü') ...[
+          if (_searchQuery.isNotEmpty ||
+              _selectedDepartment != 'Tümü' ||
+              _selectedStatus != 'Tümü') ...[
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: () {
@@ -474,7 +467,7 @@ class _StaffTabState extends State<StaffTab> {
   Widget _buildStaffList() {
     // Personelleri departmanlara göre gruplandır
     Map<String, List<Map<String, dynamic>>> staffByDepartment = {};
-    
+
     for (var staff in _filteredStaffList) {
       String department = staff['department'] as String;
       if (!staffByDepartment.containsKey(department)) {
@@ -482,7 +475,7 @@ class _StaffTabState extends State<StaffTab> {
       }
       staffByDepartment[department]!.add(staff);
     }
-    
+
     // Eğer belirli bir departman seçilmişse sadece o departmanı göster
     if (_selectedDepartment != 'Tümü') {
       return _buildStaffByDepartment(_filteredStaffList);
@@ -493,8 +486,9 @@ class _StaffTabState extends State<StaffTab> {
         itemCount: staffByDepartment.length,
         itemBuilder: (context, index) {
           String department = staffByDepartment.keys.elementAt(index);
-          List<Map<String, dynamic>> departmentStaff = staffByDepartment[department]!;
-          
+          List<Map<String, dynamic>> departmentStaff =
+              staffByDepartment[department]!;
+
           return Card(
             margin: const EdgeInsets.only(bottom: 24),
             shape: RoundedRectangleBorder(
@@ -528,7 +522,8 @@ class _StaffTabState extends State<StaffTab> {
                       ),
                       const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(20),
@@ -557,9 +552,14 @@ class _StaffTabState extends State<StaffTab> {
                           contentPadding: const EdgeInsets.all(16),
                           leading: CircleAvatar(
                             radius: 30,
-                            backgroundColor: HealthApp.primaryColor.withOpacity(0.1),
+                            backgroundColor:
+                                HealthApp.primaryColor.withOpacity(0.1),
                             child: Text(
-                              staff['name'].toString().split(' ').map((e) => e[0]).join(''),
+                              staff['name']
+                                  .toString()
+                                  .split(' ')
+                                  .map((e) => e[0])
+                                  .join(''),
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -582,7 +582,8 @@ class _StaffTabState extends State<StaffTab> {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  Icon(Icons.phone, size: 14, color: Colors.grey[600]),
+                                  Icon(Icons.phone,
+                                      size: 14, color: Colors.grey[600]),
                                   const SizedBox(width: 4),
                                   Text(
                                     staff['phone'],
@@ -599,7 +600,8 @@ class _StaffTabState extends State<StaffTab> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: staff['status'] == 'Aktif'
                                       ? Colors.green.withOpacity(0.2)
@@ -624,7 +626,8 @@ class _StaffTabState extends State<StaffTab> {
                               const SizedBox(width: 8),
                               IconButton(
                                 icon: const Icon(Icons.more_vert),
-                                onPressed: () => _showStaffOptionsBottomSheet(staff),
+                                onPressed: () =>
+                                    _showStaffOptionsBottomSheet(staff),
                               ),
                             ],
                           ),
@@ -643,7 +646,7 @@ class _StaffTabState extends State<StaffTab> {
       );
     }
   }
-  
+
   Widget _buildStaffByDepartment(List<Map<String, dynamic>> staffList) {
     return ListView.builder(
       shrinkWrap: true,
@@ -912,7 +915,6 @@ class _StaffTabState extends State<StaffTab> {
                       ? '${nameController.text.toLowerCase().replaceAll(' ', '.')}@hastane.com'
                       : emailController.text,
                   'status': selectedStatus,
-                  'imageUrl': 'assets/images/staff/placeholder.png',
                   'joinDate':
                       '${DateTime.now().day} ${getMonthName(DateTime.now().month)} ${DateTime.now().year}',
                   'schedule': scheduleController.text.isEmpty
@@ -1166,7 +1168,9 @@ class _StaffTabState extends State<StaffTab> {
               ),
               ListTile(
                 leading: Icon(
-                  staff['status'] == 'Aktif' ? Icons.cancel : Icons.check_circle,
+                  staff['status'] == 'Aktif'
+                      ? Icons.cancel
+                      : Icons.check_circle,
                   color: staff['status'] == 'Aktif' ? Colors.red : Colors.green,
                 ),
                 title: Text(
@@ -1175,12 +1179,16 @@ class _StaffTabState extends State<StaffTab> {
                 onTap: () {
                   Navigator.pop(context);
                   setState(() {
-                    staff['status'] = staff['status'] == 'Aktif' ? 'Pasif' : 'Aktif';
+                    staff['status'] =
+                        staff['status'] == 'Aktif' ? 'Pasif' : 'Aktif';
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('${staff['name']} ${staff['status'] == 'Aktif' ? 'aktif' : 'pasif'} duruma alındı'),
-                      backgroundColor: staff['status'] == 'Aktif' ? Colors.green : Colors.grey,
+                      content: Text(
+                          '${staff['name']} ${staff['status'] == 'Aktif' ? 'aktif' : 'pasif'} duruma alındı'),
+                      backgroundColor: staff['status'] == 'Aktif'
+                          ? Colors.green
+                          : Colors.grey,
                     ),
                   );
                 },
@@ -1210,4 +1218,4 @@ String getMonthName(int month) {
     'Aralık'
   ];
   return monthNames[month - 1];
-} 
+}
