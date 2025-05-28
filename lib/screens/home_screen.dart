@@ -6,7 +6,8 @@ import 'hospital_panel/hospital_panel_screen.dart';
 import 'dart:async';
 import '../services/semptom_service.dart';
 import '../services/randevu.dart';
-import 'randevu_ayarlama_screen.dart';
+import '../widgets/appointment_booking_modal.dart'; // RandevuAyarlamaModal için import
+import '../widgets/custom_time_picker_dialog.dart'; // CustomTimePickerDialog için import
 
 class HomeScreen extends StatefulWidget {
   final int initialTab;
@@ -19,8 +20,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late int _selectedIndex;
 
+  // globalRandevuList buraya taşındı
+  List<Randevu> randevuList = [];
+
   final List<Widget> _pages = const [
-    RandevuPage(),
+    // RandevuPage() kaldırıldı
     HaritaPage(),
     MesajlarPage(),
     ProfilPage(),
@@ -29,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialTab;
+    _selectedIndex = widget.initialTab > 0 ? widget.initialTab -1 : 0;
   }
 
   @override
@@ -76,7 +80,120 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: _pages[_selectedIndex],
+      // Body içeriği seçili indexe göre güncellendi
+      body: _selectedIndex == 0 // Eğer ilk tab (Randevu tabı) seçiliyse
+          ? SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Text(
+                    'Randevu',
+                    style: GoogleFonts.poppins(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: HealthApp.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                   Row(
+                     children: [
+                       Expanded(
+                         child: Text(
+                           'Yaklaşan randevularınızı görüntüleyin veya yeni bir randevu alın.',
+                           style: TextStyle(
+                             color: Colors.grey[600],
+                             fontSize: 16,
+                           ),
+                         ),
+                       ),
+                        ElevatedButton.icon(
+                         onPressed: () {
+                           Navigator.pushNamed(context, '/semptom-tarama');
+                         },
+                         icon: Icon(Icons.health_and_safety, color: Colors.white),
+                         label: Text(
+                           'Semptom Analizi ile Randevu Al',
+                           style: TextStyle(
+                             color: Colors.white,
+                             fontWeight: FontWeight.bold,
+                           ),
+                         ),
+                         style: ElevatedButton.styleFrom(
+                           backgroundColor: HealthApp.primaryColor,
+                           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                           shape: RoundedRectangleBorder(
+                             borderRadius: BorderRadius.circular(12),
+                           ),
+                         ),
+                       ),
+                     ],
+                   ),
+                   const SizedBox(height: 24),
+
+                   // Randevu Ayarlama Modalı
+                    RandevuAyarlamaModal(
+                      onAppointmentBooked: (appointment) {
+                        setState(() {
+                          randevuList.add(appointment);
+                        });
+                         ScaffoldMessenger.of(context).showSnackBar(
+                           SnackBar(
+                             content: Text('Randevu başarıyla oluşturuldu!'),
+                             backgroundColor: Colors.green,
+                           ),
+                         );
+                      },
+                    ),
+
+                   const SizedBox(height: 24),
+                   Card(
+                     child: Padding(
+                       padding: const EdgeInsets.all(20),
+                       child: Column(
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                            Text(
+                             'Yaklaşan Randevularınız',
+                             style: TextStyle(
+                               fontSize: 18,
+                               fontWeight: FontWeight.w600,
+                               color: HealthApp.primaryColor,
+                             ),
+                           ),
+                           const SizedBox(height: 16),
+                            // Yaklaşan randevular listesi
+                            SizedBox(
+                              height: 200, // Örnek yükseklik
+                              child: ListView.builder(
+                                itemCount: randevuList.length,
+                                itemBuilder: (context, index) {
+                                  final randevu = randevuList[index];
+                                  return Card(
+                                    margin: EdgeInsets.symmetric(vertical: 8),
+                                    child: ListTile(
+                                      leading: Icon(Icons.event_available, color: Colors.blue),
+                                      title: Text(
+                                          '${randevu.department} - ${randevu.doctor}'),
+                                      subtitle: Text(
+                                        '${randevu.date.day}.${randevu.date.month}.${randevu.date.year} - ${randevu.time}'),
+                                       // İsteğe bağlı: Detayları göstermek için onTap ekleyebilirsiniz
+                                       onTap: () {
+                                         // Randevu detaylarını gösterme
+                                       },
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                         ],
+                       ),
+                     ),
+                   ),
+                ],
+              ),
+            )
+          : _pages[_selectedIndex + 1], // Randevu sayfası kaldırıldığı için indexi ayarla
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -102,949 +219,6 @@ class _HomeScreenState extends State<HomeScreen> {
             _selectedIndex = index;
           });
         },
-      ),
-    );
-  }
-}
-
-class RandevuPage extends StatefulWidget {
-  const RandevuPage({super.key});
-
-  @override
-  _RandevuPageState createState() => _RandevuPageState();
-}
-
-class _RandevuPageState extends State<RandevuPage> {
-  DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
-  late String? _selectedDepartment;
-  late String? _selectedDoctor;
-  final List<String> _selectedSymptoms = [];
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(Duration(days: 30)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: HealthApp.primaryColor,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: HealthApp.primaryColor,
-              ),
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
-
-  Future<void> _selectTime(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: CustomTimePickerDialog(
-            initialTime: _selectedTime ?? TimeOfDay.now(),
-            onTimeSelected: (TimeOfDay time) {
-              setState(() {
-                _selectedTime = time;
-              });
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  void _showAppointmentConfirmation() {
-    if (_selectedDate == null ||
-        _selectedTime == null ||
-        _selectedDepartment == null ||
-        _selectedDoctor == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lütfen tüm alanları doldurun'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.green),
-            SizedBox(width: 8),
-            Text('Randevu Onayı'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildConfirmationRow('Doktor', _selectedDoctor!),
-            _buildConfirmationRow('Bölüm', _selectedDepartment!),
-            _buildConfirmationRow('Tarih',
-                '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'),
-            _buildConfirmationRow('Saat',
-                '${_selectedTime!.hour}:${_selectedTime!.minute.toString().padLeft(2, '0')}'),
-            if (_selectedSymptoms.isNotEmpty) ...[
-              SizedBox(height: 16),
-              Text(
-                'Semptomlar:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: HealthApp.primaryColor,
-                ),
-              ),
-              SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: _selectedSymptoms
-                    .map((symptom) => Chip(
-                          label: Text(symptom),
-                          backgroundColor:
-                              HealthApp.primaryColor.withOpacity(0.1),
-                        ))
-                    .toList(),
-              ),
-            ],
-            SizedBox(height: 16),
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: HealthApp.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: HealthApp.primaryColor.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.info_outline,
-                      color: HealthApp.primaryColor,
-                      size: 20,
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Randevunuzdan 15 dakika önce hastanede olmanız önerilir.',
-                      style: TextStyle(
-                        color: HealthApp.primaryColor,
-                        fontSize: 13,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('İptal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _saveAppointment();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HealthApp.primaryColor,
-            ),
-            child: Text('Onayla'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _saveAppointment() {
-    // Randevu kaydetme işlemi
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Randevunuz başarıyla oluşturuldu'),
-        backgroundColor: Colors.green,
-        action: SnackBarAction(
-          label: 'Detaylar',
-          textColor: Colors.white,
-          onPressed: () {
-            _showAppointmentDetails(
-              context,
-              _selectedDoctor!,
-              _selectedDepartment!,
-              _selectedDate!,
-              _selectedTime!,
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  void _showAppointmentDetails(
-    BuildContext context,
-    String doctor,
-    String department,
-    DateTime date,
-    TimeOfDay time,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Randevu Detayları',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: HealthApp.primaryColor,
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            Divider(),
-            _buildDetailRow('Doktor', doctor),
-            _buildDetailRow('Bölüm', department),
-            _buildDetailRow('Tarih', '${date.day}/${date.month}/${date.year}'),
-            _buildDetailRow('Saat',
-                '${time.hour}:${time.minute.toString().padLeft(2, '0')}'),
-            if (_selectedSymptoms.isNotEmpty) ...[
-              SizedBox(height: 16),
-              Text(
-                'Semptomlar',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: HealthApp.primaryColor,
-                ),
-              ),
-              SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: _selectedSymptoms
-                    .map((symptom) => Chip(
-                          label: Text(symptom),
-                          backgroundColor:
-                              HealthApp.primaryColor.withOpacity(0.1),
-                        ))
-                    .toList(),
-              ),
-            ],
-            SizedBox(height: 24),
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: HealthApp.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: HealthApp.primaryColor.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.info_outline,
-                      color: HealthApp.primaryColor,
-                      size: 20,
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Randevunuzdan 15 dakika önce hastanede olmanız önerilir.',
-                      style: TextStyle(
-                        color: HealthApp.primaryColor,
-                        fontSize: 13,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 24),
-            ElevatedButton.icon(
-              icon: Icon(Icons.qr_code),
-              label: Text('QR Kod Oluştur'),
-              onPressed: () {
-                // QR kod oluşturma işlemi
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HealthApp.primaryColor,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConfirmationRow(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Text(
-            '$label: ',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
-            ),
-          ),
-          Text(value),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Colors.grey[600],
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    if (args != null) {
-      if (args['selectedDepartment'] != null &&
-          _selectedDepartment != args['selectedDepartment']) {
-        _selectedDepartment = args['selectedDepartment'];
-      }
-      if (args['selectedDoctor'] != null &&
-          _selectedDoctor != args['selectedDoctor']) {
-        _selectedDoctor = args['selectedDoctor'];
-      }
-    }
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Randevu Al',
-            style: GoogleFonts.poppins(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: HealthApp.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Tercih ettiğiniz bölüm ve doktoru seçin',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/semptom-tarama');
-                },
-                icon: Icon(Icons.health_and_safety, color: Colors.white),
-                label: Text(
-                  'Semptom Analizi ile Randevu Al',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HealthApp.primaryColor,
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Randevu Bilgileri',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: HealthApp.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      labelText: 'Bölüm Seçiniz',
-                      labelStyle: TextStyle(color: HealthApp.primaryColor),
-                      prefixIcon: Icon(Icons.local_hospital,
-                          color: HealthApp.primaryColor),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: HealthApp.primaryColor),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: HealthApp.primaryColor),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: HealthApp.primaryColor, width: 2),
-                      ),
-                    ),
-                    dropdownColor: Colors.white,
-                    style: TextStyle(color: HealthApp.primaryColor),
-                    icon: Icon(Icons.arrow_drop_down,
-                        color: HealthApp.primaryColor),
-                    items: [
-                      'Dahiliye',
-                      'Kardiyoloji',
-                      'Nöroloji',
-                      'Ortopedi',
-                      'Göz Hastalıkları'
-                    ]
-                        .map((e) => DropdownMenuItem(
-                              value: e,
-                              child: Text(e,
-                                  style:
-                                      TextStyle(color: HealthApp.primaryColor)),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedDepartment = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      labelText: 'Doktor Seçiniz',
-                      labelStyle: TextStyle(color: HealthApp.primaryColor),
-                      prefixIcon:
-                          Icon(Icons.person, color: HealthApp.primaryColor),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: HealthApp.primaryColor),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: HealthApp.primaryColor),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: HealthApp.primaryColor, width: 2),
-                      ),
-                    ),
-                    dropdownColor: Colors.white,
-                    style: TextStyle(color: HealthApp.primaryColor),
-                    icon: Icon(Icons.arrow_drop_down,
-                        color: HealthApp.primaryColor),
-                    items: [
-                      'Dr. Ahmet Yılmaz',
-                      'Dr. Ayşe Kaya',
-                      'Dr. Mehmet Demir'
-                    ]
-                        .map((e) => DropdownMenuItem(
-                              value: e,
-                              child: Text(e,
-                                  style:
-                                      TextStyle(color: HealthApp.primaryColor)),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedDoctor = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          icon: Icon(Icons.calendar_today, color: Colors.white),
-                          label: Text(
-                            _selectedDate != null
-                                ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                                : 'Tarih Seç',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: HealthApp.primaryColor,
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () => _selectDate(context),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          icon: Icon(Icons.access_time, color: Colors.white),
-                          label: Text(
-                            _selectedTime != null
-                                ? '${_selectedTime!.hour}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
-                                : 'Saat Seç',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: HealthApp.primaryColor,
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () => _selectTime(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _showAppointmentConfirmation,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: HealthApp.primaryColor,
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      'Randevu Al',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Yaklaşan Randevularınız',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: HealthApp.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 220, // Panel yüksekliği
-                    child: ListView(
-                      children: [
-                        ...globalRandevuList.map((randevu) => Card(
-                              margin: EdgeInsets.symmetric(vertical: 8),
-                              child: ListTile(
-                                leading: Icon(Icons.event_available,
-                                    color: Colors.blue),
-                                title: Text(
-                                    '${randevu.department} - ${randevu.doctor}'),
-                                subtitle: Text(
-                                  '${randevu.date.day}.${randevu.date.month}.${randevu.date.year} - ${randevu.time}',
-                                ),
-                              ),
-                            )),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAppointmentTile(
-    String doctorName,
-    String department,
-    String date,
-    String time,
-    Color color,
-  ) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.2),
-          child: Icon(Icons.calendar_today, color: color),
-        ),
-        title: Text(
-          doctorName,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        subtitle: Text('$department - $date, $time'),
-        trailing: PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: color),
-          onSelected: (String value) {
-            if (value == 'detay') {
-              _showAppointmentDetails(
-                context,
-                doctorName,
-                department,
-                DateTime.parse(date),
-                TimeOfDay.fromDateTime(DateTime.parse(time)),
-              );
-            } else if (value == 'iptal') {
-              _showCancelConfirmation(doctorName, date, time);
-            }
-          },
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-            PopupMenuItem<String>(
-              value: 'detay',
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, color: color),
-                  SizedBox(width: 8),
-                  Text('Detaylar'),
-                ],
-              ),
-            ),
-            PopupMenuItem<String>(
-              value: 'iptal',
-              child: Row(
-                children: [
-                  Icon(Icons.cancel, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('İptal Et'),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showCancelConfirmation(String doctorName, String date, String time) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.warning, color: Colors.red),
-            SizedBox(width: 8),
-            Text('Randevu İptali'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-                'Aşağıdaki randevuyu iptal etmek istediğinizden emin misiniz?'),
-            SizedBox(height: 16),
-            _buildDetailRow('Doktor', doctorName),
-            _buildDetailRow('Tarih', date),
-            _buildDetailRow('Saat', time),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Vazgeç'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // Randevu iptal işlemi
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Randevunuz iptal edildi'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: Text('İptal Et'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class CustomTimePickerDialog extends StatefulWidget {
-  final TimeOfDay initialTime;
-  final Function(TimeOfDay) onTimeSelected;
-
-  const CustomTimePickerDialog({
-    super.key,
-    required this.initialTime,
-    required this.onTimeSelected,
-  });
-
-  @override
-  _CustomTimePickerDialogState createState() => _CustomTimePickerDialogState();
-}
-
-class _CustomTimePickerDialogState extends State<CustomTimePickerDialog> {
-  late int selectedHour;
-  late int selectedMinute;
-  final List<int> hours = List.generate(24, (index) => index);
-  final List<int> minutes = List.generate(12, (index) => index * 5);
-
-  @override
-  void initState() {
-    super.initState();
-    selectedHour = widget.initialTime.hour;
-    selectedMinute = widget.initialTime.minute;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Saat Seçin',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: HealthApp.primaryColor,
-            ),
-          ),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Saat seçici
-              SizedBox(
-                height: 200,
-                width: 70,
-                child: ListWheelScrollView(
-                  controller: FixedExtentScrollController(
-                    initialItem: selectedHour,
-                  ),
-                  itemExtent: 40,
-                  physics: FixedExtentScrollPhysics(),
-                  onSelectedItemChanged: (index) {
-                    setState(() {
-                      selectedHour = index;
-                    });
-                  },
-                  children: hours.map((hour) {
-                    return Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: selectedHour == hour
-                            ? HealthApp.primaryColor.withOpacity(0.1)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        hour.toString().padLeft(2, '0'),
-                        style: TextStyle(
-                          fontSize: selectedHour == hour ? 24 : 20,
-                          fontWeight: selectedHour == hour
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          color: selectedHour == hour
-                              ? HealthApp.primaryColor
-                              : Colors.black54,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              Text(
-                ':',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: HealthApp.primaryColor,
-                ),
-              ),
-              // Dakika seçici
-              SizedBox(
-                height: 200,
-                width: 70,
-                child: ListWheelScrollView(
-                  controller: FixedExtentScrollController(
-                    initialItem: minutes.indexOf(
-                      (selectedMinute ~/ 5) * 5,
-                    ),
-                  ),
-                  itemExtent: 40,
-                  physics: FixedExtentScrollPhysics(),
-                  onSelectedItemChanged: (index) {
-                    setState(() {
-                      selectedMinute = minutes[index];
-                    });
-                  },
-                  children: minutes.map((minute) {
-                    return Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: selectedMinute == minute
-                            ? HealthApp.primaryColor.withOpacity(0.1)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        minute.toString().padLeft(2, '0'),
-                        style: TextStyle(
-                          fontSize: selectedMinute == minute ? 24 : 20,
-                          fontWeight: selectedMinute == minute
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          color: selectedMinute == minute
-                              ? HealthApp.primaryColor
-                              : Colors.black54,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'İptal',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  widget.onTimeSelected(
-                    TimeOfDay(hour: selectedHour, minute: selectedMinute),
-                  );
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HealthApp.primaryColor,
-                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  'Seç',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

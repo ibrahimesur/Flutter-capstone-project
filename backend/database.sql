@@ -30,3 +30,15 @@ CREATE TABLE hospital_admins (
     hospital_name VARCHAR(255), -- Bağlı olduğu hastane adı (isteğe bağlı)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP -- Kayıt tarihi
 );
+
+CREATE TABLE randevular (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Randevular için benzersiz UUID
+    hasta_id UUID NOT NULL, -- users tablosundaki kullanıcının (hastanın) ID'si
+    doctor_id SERIAL NOT NULL, -- doctors tablosundaki doktorun ID'si
+    randevu_tarihi DATE NOT NULL,
+    randevu_saati TIME NOT NULL,
+    olusturma_tarihi TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    guncelleme_tarihi TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE, -- users tablosuna foreign key bağlantısı
+    FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id) ON DELETE CASCADE -- doctors tablosuna foreign key bağlantısı
+);

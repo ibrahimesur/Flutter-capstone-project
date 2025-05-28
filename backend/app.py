@@ -10,6 +10,7 @@ import bcrypt
 from dotenv import load_dotenv
 import jwt
 import datetime
+from functools import wraps
 
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -288,12 +289,10 @@ def login():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        # Kullanıcı tipine göre ilgili tabloyu sorgula
         cur.execute(f'SELECT {user_id_column}, {password_column} FROM {table_name} WHERE {identifier_column}=%s', (identifier,))
         user = cur.fetchone()
 
         if user:
-            # Veritabanından çekilen şifre hash: user[1] artık password_hash veya password
             hashed_password_from_db = None
             if isinstance(user[1], str):
                  hashed_password_from_db = user[1].encode('utf-8')
@@ -303,26 +302,25 @@ def login():
                 logger.error('Beklenmedik şifre formatı tipi: %s', type(user[1]))
                 return jsonify({'message':'Giriş hatası', 'error':'Beklenmedik şifre formatı.'}), 500
 
-            # bcrypt.checkpw karşılaştırması
             if bcrypt.checkpw(password.encode('utf-8'), hashed_password_from_db):
-                 # Başarılı giriş - JWT token oluştur
-                # Token'a kullanıcı tipini ve ID'yi ekle
-                token_payload = {
-                    'user_id': str(user[0]),
-                    'user_type': user_type,
-                    'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24) # Token geçerlilik süresi
-                }
-                token = jwt.encode(token_payload,
-                                   app.config['SECRET_KEY'],
-                                   algorithm='HS256')
+                 user_id_value = user[0]
 
-                return jsonify({'message':'Giriş başarılı','token':token, 'user_type': user_type}),200
+                 if user_type == 'patient':
+                      return jsonify({
+                           'message':'Giriş başarılı',
+                           'user_type': user_type,
+                           'hasta_id': str(user_id_value)
+                          }), 200
+                 else:
+                     return jsonify({
+                          'message':'Giriş başarılı',
+                          'user_type': user_type
+                         }), 200
+
             else:
-                 # Şifre yanlış
                 return jsonify({'message':'Geçersiz kimlik veya şifre'}),401
 
         else:
-            # Kullanıcı bulunamadı
             return jsonify({'message':'Geçersiz kimlik veya şifre'}),401
 
     except psycopg2.OperationalError as e:
@@ -332,7 +330,80 @@ def login():
         logger.error('Beklenmedik giriş hatası: %s', e, exc_info=True)
         return jsonify({'message':'Giriş hatası','error':'Beklenmedik sunucu hatası.'}),500
     finally:
-        # Bağlantıyı kapat
+        if 'cur' in locals() and cur is not None:
+             cur.close()
+        if 'conn' in locals() and conn is not None:
+             conn.close()
+
+@app.route('/book-appointment', methods=['POST','OPTIONS'])
+def book_appointment():
+    if request.method == 'OPTIONS':
+        r = app.make_default_options_response()
+        r.headers['Access-Control-Max-Age'] = '3600'
+        return r
+
+    if not request.is_json:
+        return jsonify({'error':'JSON formatı gerekli'}), 400
+
+    data = request.get_json()
+    # TODO: hasta_id bilgisini frontend'den almanız gerekiyor.
+    # Güvenlik nedeniyle bu bilginin backend tarafından doğrulanması önemlidir.
+    # Şu an için varsayımsal olarak istek gövdesinden alıyoruz:
+    hasta_id = data.get('hasta_id')
+
+    doctor_name = data.get('doctor')
+    appointment_date_str = data.get('date')
+    appointment_time_str = data.get('time')
+    department = data.get('department')
+
+    if not hasta_id or not doctor_name or not appointment_date_str or not appointment_time_str:
+        return jsonify({'error':'Hasta ID, Doktor adı, tarih ve saat bilgileri eksik'}), 400
+
+    try:
+        appointment_date = datetime.datetime.fromisoformat(appointment_date_str.replace('Z', '+00:00')).date()
+        appointment_time = appointment_time_str + ":00" if len(appointment_time_str) == 5 else appointment_time_str
+
+        conn = get_db_connection()
+        cur = conn.cursor();
+
+        cur.execute('SELECT doctor_id FROM doctors WHERE name = %s', (doctor_name,))
+        doctor_result = cur.fetchone()
+
+        if not doctor_result:
+            conn.rollback();cur.close();conn.close();
+            return jsonify({'error':f'{doctor_name} adında bir doktor bulunamadı'}), 404
+
+        doctor_id = doctor_result[0]
+
+        cur.execute(
+            """
+            INSERT INTO randevular (hasta_id, doctor_id, randevu_tarihi, randevu_saati)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id, hasta_id;
+            """,
+            (hasta_id, doctor_id, appointment_date, appointment_time)
+        )
+        result = cur.fetchone()
+        new_appointment_id = result[0]
+        booked_hasta_id = result[1]
+        conn.commit()
+
+        return jsonify({
+            'message':'Randevu başarıyla oluşturuldu',
+            'appointment_id': str(new_appointment_id),
+            'hasta_id': str(booked_hasta_id),
+            'doctor_id': doctor_id,
+            'randevu_tarihi': appointment_date.isoformat(),
+            'randevu_saati': appointment_time
+            }), 201
+
+    except ValueError as ve:
+        logger.error('Tarih/Saat format hatası: %s', ve, exc_info=True)
+        return jsonify({'error':f'Tarih veya saat formatı geçersiz: {ve}'}), 400
+    except Exception as e:
+        conn.rollback();logger.error('Randevu oluşturma hatası: %s', e, exc_info=True);
+        return jsonify({'message':'Randevu oluşturulurken bir hata oluştu', 'error':str(e)}), 500
+    finally:
         if 'cur' in locals() and cur is not None:
              cur.close()
         if 'conn' in locals() and conn is not None:

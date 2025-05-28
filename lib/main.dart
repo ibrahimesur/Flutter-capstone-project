@@ -5,8 +5,8 @@ import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/doctor_panel/doctor_panel_screen.dart';
 import 'screens/hospital_panel/hospital_panel_screen.dart';
-import 'screens/randevu_ayarlama_screen.dart';
 import 'screens/semptom_tarama_screen.dart';
+import 'widgets/appointment_booking_modal.dart';
 
 void main() {
   runApp(const HealthApp());
@@ -33,7 +33,14 @@ class HealthApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
         '/doctor-dashboard': (context) => const DoctorPanelScreen(),
         '/hospital-dashboard': (context) => const HospitalPanelScreen(),
-        '/appointment': (context) => const RandevuAyarlamaScreen(department: 'Dahiliye'),
+        '/appointment': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          final initialDepartment = args?['department'] as String?;
+          return Scaffold(
+            appBar: AppBar(title: const Text('Randevu Ayarlama')),
+            body: Center(),
+          );
+        },
         '/semptom-tarama': (context) => Scaffold(
               appBar: AppBar(title: const Text('Semptom Tarama')),
               body: const SemptomTaramaScreen(),

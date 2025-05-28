@@ -6,6 +6,7 @@ import '../main.dart';
 import 'dart:convert';
 import 'package:csv/csv.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import '../widgets/appointment_booking_modal.dart';
 
 class SemptomTaramaScreen extends StatefulWidget {
   const SemptomTaramaScreen({super.key});
@@ -237,13 +238,13 @@ class _SemptomTaramaScreenState extends State<SemptomTaramaScreen> {
     if (mesaj['isRedirection'] == true) {
       return GestureDetector(
         onTap: () {
-          // Yönlendirme işlemi
+          // Yönlendirme işlemi yerine modal gösterme
           FocusScope.of(context).unfocus(); // Odaklanmayı kaldır
-          Navigator.pushNamed(
-            context,
-            '/randevu-ayarlama',
-            arguments: {
-              'department': mesaj['department'],
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true, // Tam ekran modal için
+            builder: (BuildContext context) {
+              return RandevuAyarlamaModal(initialDepartment: mesaj['department']);
             },
           );
         },

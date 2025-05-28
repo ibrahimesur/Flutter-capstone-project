@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -34,28 +35,31 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   }
 
   Future<void> _login() async {
+    // Aktif olan herhangi bir input elementinin odağını kaldır (Web için faydalı olabilir)
+    FocusManager.instance.primaryFocus?.unfocus();
+
     if (_formKey.currentState!.validate()) {
+      // Backend URL'sini web için 127.0.0.1:8000 olarak ayarlıyoruz
+      // Android emülatörü için 10.0.2.2:8000 kullanılması gerekir
       final url = Uri.parse('http://127.0.0.1:8000/login');
       
       String userType;
       String identifier;
-      String emailToSend = ''; // Email alanı hasta harici için boş
+      String emailToSend = '';
 
       switch (_tabController.index) {
         case 0: // Hasta
           userType = 'patient';
-          identifier = _tcKimlikNoController.text; // Hasta için TC Kimlik No
-          emailToSend = _emailController.text; // Hasta için email gönder
+          identifier = _tcKimlikNoController.text;
+          emailToSend = _emailController.text;
           break;
         case 1: // Doktor
           userType = 'doctor';
-          identifier = _emailController.text; // Doktor ID'si için email alanı kullanılıyor
-          // emailToSend boş kalacak
+          identifier = _emailController.text;
           break;
         case 2: // Hastane Yönetimi
           userType = 'hospital_admin';
-          identifier = _emailController.text; // Hastane ID'si için email alanı kullanılıyor
-          // emailToSend boş kalacak
+          identifier = _emailController.text;
           break;
         default:
           userType = 'patient';
@@ -68,10 +72,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           url,
           headers: {'Content-Type': 'application/json'},
           body: json.encode({
-            'identifier': identifier, // Kullanıcı tipine göre TC No veya Kurumsal ID
-            'email': emailToSend, // Sadece hasta için veya backend kullanıyorsa gönderilir
+            'identifier': identifier,
+            'email': emailToSend,
             'password': _passwordController.text,
-            'user_type': userType, // Belirlenen kullanıcı tipi
+            'user_type': userType,
           }),
         );
 
@@ -79,6 +83,22 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           final responseData = json.decode(response.body);
           print('Giriş başarılı: ${responseData['message']}');
           
+          // Başarılı hasta girişi durumunda hasta ID'sini kaydet
+          if (userType == 'patient') {
+             // Backend'den dönen yanıtın yapısını kontrol edin.
+             // Backend login endpoint'i artık başarılı hasta girişinde 'hasta_id'yi döndürüyor.
+             final String? receivedHastaId = responseData['hasta_id'];
+
+             if (receivedHastaId != null) {
+               final prefs = await SharedPreferences.getInstance();
+               await prefs.setString('hasta_id', receivedHastaId); // Hasta ID'sini 'hasta_id' anahtarıyla kaydedin
+               print('Hasta ID SharedPreferences\'a kaydedildi: $receivedHastaId');
+             } else {
+               print('Login başarılı ama backend hasta ID\'si döndürmedi.');
+               // Kullanıcıya bilgi verilebilir veya bir hata loglanabilir.
+             }
+          }
+
           // Sekme durumuna göre yönlendirme
           switch (_tabController.index) {
             case 0: // Hasta
@@ -283,7 +303,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             TextFormField(
               controller: _emailController,
               decoration: const InputDecoration(
-                labelText: 'Doktor ID', // E-posta yerine Doktor ID
+                labelText: 'Doktor ID',
                 prefixIcon: Icon(Icons.badge),
               ),
               keyboardType: TextInputType.text,
@@ -377,7 +397,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             TextFormField(
               controller: _emailController,
               decoration: const InputDecoration(
-                labelText: 'Hastane ID', // E-posta yerine Hastane ID
+                labelText: 'Hastane ID',
                 prefixIcon: Icon(Icons.business),
               ),
               keyboardType: TextInputType.text,
