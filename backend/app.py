@@ -366,7 +366,7 @@ def book_appointment():
         conn = get_db_connection()
         cur = conn.cursor();
 
-        cur.execute('SELECT doctor_id FROM doctors WHERE name = %s', (doctor_name,))
+        cur.execute('SELECT doctor_id FROM doctors WHERE LOWER(name) = LOWER(%s)', (doctor_name.strip(),))
         doctor_result = cur.fetchone()
 
         if not doctor_result:
@@ -408,6 +408,39 @@ def book_appointment():
              cur.close()
         if 'conn' in locals() and conn is not None:
              conn.close()
+
+@app.route('/list-doctors', methods=['GET', 'OPTIONS'])
+def list_doctors():
+    if request.method == 'OPTIONS':
+        r = app.make_default_options_response()
+        r.headers['Access-Control-Max-Age'] = '3600'
+        return r
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT name, doctor_id, institutional_id, department FROM doctors')
+        doctors = cur.fetchall()
+
+        doctor_list = []
+        for doc in doctors:
+            doctor_list.append({
+                'name': doc[0],
+                'doctor_id': str(doc[1]),
+                'institutional_id': doc[2],
+                'department': doc[3]
+            })
+
+        return jsonify(doctor_list), 200
+
+    except Exception as e:
+        logger.error('Doktor listeleme hatası: %s', e, exc_info=True)
+        return jsonify({'error': 'Doktorlar listelenirken bir hata oluştu'}), 500
+    finally:
+        if 'cur' in locals() and cur is not None:
+            cur.close()
+        if 'conn' in locals() and conn is not None:
+            conn.close()
 
 if __name__ == '__main__':
     logger.info('Sunucu başlatılıyor…')
