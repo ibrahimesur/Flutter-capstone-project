@@ -6,8 +6,11 @@ import 'hospital_panel/hospital_panel_screen.dart';
 import 'dart:async';
 import '../services/semptom_service.dart';
 import '../services/randevu.dart';
-import '../widgets/appointment_booking_modal.dart'; // RandevuAyarlamaModal için import
-import '../widgets/custom_time_picker_dialog.dart'; // CustomTimePickerDialog için import
+import '../widgets/appointment_booking_modal.dart';
+import '../widgets/custom_time_picker_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
   final int initialTab;
@@ -19,22 +22,68 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late int _selectedIndex;
-
-  // globalRandevuList buraya taşındı
   List<Randevu> randevuList = [];
-
-  final List<Widget> _pages = const [
-    // RandevuPage() kaldırıldı
-    HaritaPage(),
-    MesajlarPage(),
-    ProfilPage(),
-  ];
+  bool isLoading = false;
+  String? error;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialTab > 0 ? widget.initialTab -1 : 0;
+    // SharedPreferences'ın veriyi yüklemesine izin vermek için küçük bir gecikme ekleyelim
+    Future.delayed(Duration(milliseconds: 100), () {
+      _loadAppointments();
+    });
   }
+
+  Future<void> _loadAppointments() async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hastaId = prefs.getString('hastaId');
+      
+      if (hastaId == null) {
+        throw Exception('Kullanıcı ID bulunamadı');
+      }
+
+      final response = await http.get(
+        Uri.parse('http://localhost:8000/get-appointments/$hastaId'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> appointmentsJson = json.decode(response.body);
+        setState(() {
+          randevuList = appointmentsJson.map((json) => Randevu(
+            id: json['id'],
+            hastaId: json['hasta_id'],
+            department: json['department'],
+            doctor: json['doctor'],
+            date: DateTime.parse(json['randevu_tarihi']),
+            time: json['randevu_saati'],
+          )).toList();
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Randevular yüklenirken bir hata oluştu');
+      }
+    } catch (e) {
+      setState(() {
+        error = e.toString();
+        isLoading = false;
+      });
+    }
+  }
+
+  final List<Widget> _pages = const [
+    RandevuPage(),
+    HaritaPage(),
+    MesajlarPage(),
+    ProfilPage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -80,125 +129,25 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      // Body içeriği seçili indexe göre güncellendi
-      body: _selectedIndex == 0 // Eğer ilk tab (Randevu tabı) seçiliyse
-          ? SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   Text(
-                    'Randevu',
-                    style: GoogleFonts.poppins(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: HealthApp.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                   Row(
-                     children: [
-                       Expanded(
-                         child: Text(
-                           'Yaklaşan randevularınızı görüntüleyin veya yeni bir randevu alın.',
-                           style: TextStyle(
-                             color: Colors.grey[600],
-                             fontSize: 16,
-                           ),
-                         ),
-                       ),
-                        ElevatedButton.icon(
-                         onPressed: () {
-                           Navigator.pushNamed(context, '/semptom-tarama');
-                         },
-                         icon: Icon(Icons.health_and_safety, color: Colors.white),
-                         label: Text(
-                           'Semptom Analizi ile Randevu Al',
-                           style: TextStyle(
-                             color: Colors.white,
-                             fontWeight: FontWeight.bold,
-                           ),
-                         ),
-                         style: ElevatedButton.styleFrom(
-                           backgroundColor: HealthApp.primaryColor,
-                           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                           shape: RoundedRectangleBorder(
-                             borderRadius: BorderRadius.circular(12),
-                           ),
-                         ),
-                       ),
-                     ],
-                   ),
-                   const SizedBox(height: 24),
-
-                   // Randevu Ayarlama Modalı
-                    RandevuAyarlamaModal(
-                      onAppointmentBooked: (appointment) {
-                        setState(() {
-                          randevuList.add(appointment);
-                        });
-                         ScaffoldMessenger.of(context).showSnackBar(
-                           SnackBar(
-                             content: Text('Randevu başarıyla oluşturuldu!'),
-                             backgroundColor: Colors.green,
-                           ),
-                         );
-                      },
-                    ),
-
-                   const SizedBox(height: 24),
-                   Card(
-                     child: Padding(
-                       padding: const EdgeInsets.all(20),
-                       child: Column(
-                         crossAxisAlignment: CrossAxisAlignment.start,
-                         children: [
-                            Text(
-                             'Yaklaşan Randevularınız',
-                             style: TextStyle(
-                               fontSize: 18,
-                               fontWeight: FontWeight.w600,
-                               color: HealthApp.primaryColor,
-                             ),
-                           ),
-                           const SizedBox(height: 16),
-                            // Yaklaşan randevular listesi
-                            SizedBox(
-                              height: 200, // Örnek yükseklik
-                              child: ListView.builder(
-                                itemCount: randevuList.length,
-                                itemBuilder: (context, index) {
-                                  final randevu = randevuList[index];
-                                  return Card(
-                                    margin: EdgeInsets.symmetric(vertical: 8),
-                                    child: ListTile(
-                                      leading: Icon(Icons.event_available, color: Colors.blue),
-                                      title: Text(
-                                          '${randevu.department} - ${randevu.doctor}'),
-                                      subtitle: Text(
-                                        '${randevu.date.day}.${randevu.date.month}.${randevu.date.year} - ${randevu.time}'),
-                                       // İsteğe bağlı: Detayları göstermek için onTap ekleyebilirsiniz
-                                       onTap: () {
-                                         // Randevu detaylarını gösterme
-                                       },
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                         ],
-                       ),
-                     ),
-                   ),
-                ],
-              ),
-            )
-          : _pages[_selectedIndex + 1], // Randevu sayfası kaldırıldığı için indexi ayarla
+      body: Column(
+        children: [
+          _buildUpcomingAppointments(),
+          Expanded(
+            child: _pages[_selectedIndex],
+          ),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
-            label: 'Randevu',
+            label: 'Randevular',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.map),
@@ -210,15 +159,121 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            label: 'Profilim',
+            label: 'Profil',
           ),
         ],
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+      ),
+    );
+  }
+
+  Widget _buildUpcomingAppointments() {
+    if (isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (error != null) {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text(
+          'Hata: $error',
+          style: const TextStyle(color: Colors.red),
+        ),
+      );
+    }
+
+    if (randevuList.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'Yaklaşan randevunuz bulunmamaktadır.',
+          style: TextStyle(fontSize: 16),
+        ),
+      );
+    }
+
+    return Container(
+      height: 200,
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Yaklaşan Randevular',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: randevuList.length,
+              itemBuilder: (context, index) {
+                final appointment = randevuList[index];
+                return Container(
+                  width: 280,
+                  margin: const EdgeInsets.only(right: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          appointment.department,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: HealthApp.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Dr. ${appointment.doctor}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.calendar_today, size: 16),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${appointment.date.day}/${appointment.date.month}/${appointment.date.year}',
+                            ),
+                            const SizedBox(width: 16),
+                            const Icon(Icons.access_time, size: 16),
+                            const SizedBox(width: 4),
+                            Text(appointment.time),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1858,10 +1913,53 @@ class SemptomAnalizSonucu extends StatelessWidget {
               child: Text('İptal'),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _showAppointmentConfirmation(
-                    context, doctor, department, selectedDate, selectedTime);
+              onPressed: () async {
+                // Randevu oluşturma işlemi
+                try {
+                  final prefs = await SharedPreferences.getInstance();
+                  final hastaId = prefs.getString('userId');
+                  
+                  if (hastaId == null) {
+                    throw Exception('Kullanıcı ID bulunamadı');
+                  }
+
+                  final response = await http.post(
+                    Uri.parse('http://localhost:8000/book-appointment'),
+                    headers: {'Content-Type': 'application/json'},
+                    body: json.encode({
+                      'hasta_id': hastaId,
+                      'doctor': doctor,
+                      'department': department,
+                      'date': selectedDate.toIso8601String(),
+                      'time': '${selectedTime.hour}:${selectedTime.minute.toString().padLeft(2, '0')}',
+                    }),
+                  );
+
+                  if (response.statusCode == 201) {
+                    Navigator.pop(context); // Dialog'u kapat
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Randevu başarıyla oluşturuldu!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    // Ana sayfaya dön ve randevuları güncelle
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/',
+                      (route) => false,
+                    );
+                  } else {
+                    throw Exception('Randevu oluşturulamadı');
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Hata: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: HealthApp.primaryColor,
@@ -2410,6 +2508,23 @@ class SemptomAnalizSonucu extends StatelessWidget {
                       ],
                     ),
                   ),
+                ),
+                // Randevu Ayarlama Modalı
+                RandevuAyarlamaModal(
+                  onAppointmentBooked: (appointment) {
+                    // Ana sayfaya dön ve randevuları güncelle
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/',
+                      (route) => false,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Randevu başarıyla oluşturuldu!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -3232,6 +3347,80 @@ class _ProfilPageState extends State<ProfilPage> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class RandevuPage extends StatefulWidget {
+  const RandevuPage({super.key});
+
+  @override
+  _RandevuPageState createState() => _RandevuPageState();
+}
+
+class _RandevuPageState extends State<RandevuPage> {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Randevularım',
+            style: GoogleFonts.poppins(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: HealthApp.primaryColor,
+            ),
+          ),
+          SizedBox(height: 16),
+          ElevatedButton.icon(
+            icon: Icon(Icons.add),
+            label: Text('Yeni Randevu'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HealthApp.primaryColor,
+              minimumSize: Size(double.infinity, 50),
+            ),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                builder: (context) => RandevuAyarlamaModal(
+                  onAppointmentBooked: (appointment) {
+                    Navigator.pop(context);
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/',
+                      (route) => false,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Randevu başarıyla oluşturuldu!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+          SizedBox(height: 24),
+          Text(
+            'Yaklaşan Randevular',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: HealthApp.primaryColor,
+            ),
+          ),
+          SizedBox(height: 16),
+          // Randevu listesi buraya gelecek
         ],
       ),
     );

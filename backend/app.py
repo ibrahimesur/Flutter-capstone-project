@@ -442,6 +442,49 @@ def list_doctors():
         if 'conn' in locals() and conn is not None:
             conn.close()
 
+@app.route('/get-appointments/<hasta_id>', methods=['GET'])
+def get_appointments(hasta_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT r.id, r.hasta_id, d.name as doctor, dep.name as department, 
+                   r.randevu_tarihi, r.randevu_saati
+            FROM randevular r
+            JOIN doctors d ON r.doctor_id = d.doctor_id
+            JOIN departments dep ON d.department_id = dep.department_id
+            WHERE r.hasta_id = %s
+            ORDER BY r.randevu_tarihi ASC, r.randevu_saati ASC
+        """, (hasta_id,))
+        
+        appointments = cur.fetchall()
+        
+        if not appointments:
+            return jsonify([]), 200
+
+        appointment_list = []
+        for appt in appointments:
+            appointment_list.append({
+                'id': str(appt[0]),
+                'hasta_id': str(appt[1]),
+                'doctor': appt[2],
+                'department': appt[3],
+                'randevu_tarihi': appt[4].isoformat(),
+                'randevu_saati': appt[5].strftime('%H:%M')
+            })
+
+        return jsonify(appointment_list), 200
+
+    except Exception as e:
+        logger.error('Randevuları getirme hatası: %s', e, exc_info=True)
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'cur' in locals() and cur is not None:
+            cur.close()
+        if 'conn' in locals() and conn is not None:
+            conn.close()
+
 if __name__ == '__main__':
     logger.info('Sunucu başlatılıyor…')
     app.run(host='0.0.0.0',port=8000,debug=True,threaded=True)
