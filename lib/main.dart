@@ -4,6 +4,8 @@ import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/doctor_panel/doctor_panel_screen.dart';
+import 'screens/hospital_panel/hospital_panel_screen.dart';
+import 'screens/randevu_ayarlama_screen.dart';
 import 'screens/semptom_tarama_screen.dart';
 
 void main() {
@@ -29,43 +31,33 @@ class HealthApp extends StatelessWidget {
         '/': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/doctor-panel': (context) => const DoctorPanelScreen(),
+        '/doctor-dashboard': (context) => const DoctorPanelScreen(),
+        '/hospital-dashboard': (context) => const HospitalPanelScreen(),
+        '/appointment': (context) => const RandevuAyarlamaScreen(department: 'Dahiliye'),
         '/semptom-tarama': (context) => Scaffold(
-              appBar: AppBar(title: Text('Semptom Tarama')),
-              body: SemptomTaramaScreen(),
+              appBar: AppBar(title: const Text('Semptom Tarama')),
+              body: const SemptomTaramaScreen(),
             ),
       },
       theme: ThemeData(
-        primarySwatch: Colors.blue,
         primaryColor: primaryColor,
         scaffoldBackgroundColor: backgroundColor,
-        textTheme: GoogleFonts.poppinsTextTheme(),
-        appBarTheme: AppBarTheme(
-          elevation: 0,
-          backgroundColor: primaryColor,
-          titleTextStyle: GoogleFonts.poppins(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-          iconTheme: const IconThemeData(color: Colors.white),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: primaryColor,
+          primary: primaryColor,
+          secondary: secondaryColor,
         ),
-        cardTheme: CardThemeData(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          color: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: primaryColor,
+            backgroundColor: accentColor,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            elevation: 0,
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
@@ -73,21 +65,26 @@ class HealthApp extends StatelessWidget {
           fillColor: Colors.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: secondaryColor),
+            borderSide: const BorderSide(color: primaryColor),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: secondaryColor),
+            borderSide: const BorderSide(color: primaryColor),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: primaryColor, width: 2),
+            borderSide: const BorderSide(color: accentColor, width: 2),
           ),
           labelStyle: const TextStyle(color: primaryColor),
-          prefixIconColor: primaryColor,
+        ),
+        textTheme: GoogleFonts.poppinsTextTheme(
+          Theme.of(context).textTheme.apply(
+                bodyColor: primaryColor,
+                displayColor: primaryColor,
+              ),
         ),
         chipTheme: const ChipThemeData(
-          backgroundColor: Color(0xFFBFD4E8), // secondaryColor.withOpacity(0.3)
+          backgroundColor: Color(0xFFBFD4E8),
           selectedColor: primaryColor,
           labelStyle: TextStyle(color: primaryColor),
         ),
@@ -96,20 +93,6 @@ class HealthApp extends StatelessWidget {
           unselectedItemColor: Colors.grey[400],
         ),
       ),
-      onGenerateRoute: (settings) {
-        if (settings.name == '/') {
-          final args = settings.arguments as Map<String, dynamic>?;
-          int initialTab = 0;
-          if (args != null && args['initialTab'] != null) {
-            initialTab = args['initialTab'] as int;
-          }
-          return MaterialPageRoute(
-            builder: (context) => HomeScreen(initialTab: initialTab),
-            settings: settings,
-          );
-        }
-        // ... diğer route'lar ...
-      },
     );
   }
 }

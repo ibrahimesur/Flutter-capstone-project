@@ -178,27 +178,71 @@ def register():
     if not request.is_json:
         return jsonify({'message':'JSON formatı gerekli'}),400
     data = request.get_json()
+    name = data.get('name')
     tc_kimlik_no = data.get('tc_kimlik_no')
+    institutional_id = data.get('institutional_id')
     email = data.get('email')
     password = data.get('password')
-    if not tc_kimlik_no or not email or not password:
-        return jsonify({'message':'TC Kimlik No, e-posta ve şifre gerekli'}),400
-    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    # BYTEA yerine VARCHAR olduğu için hash'i stringe çevirerek kaydediyoruz.
-    hashed_string = hashed.decode('utf-8')
+    user_type = data.get('user_type')
+
+    if not name or not email or not password or not user_type:
+        return jsonify({'message':'Ad, e-posta, şifre ve kullanıcı tipi gerekli'}),400
+
+    table_name = None
+    insert_columns = []
+    insert_values = []
+    unique_constraint_column = None
+
+    if user_type == 'patient':
+        if not tc_kimlik_no:
+            return jsonify({'message':'Hasta kaydı için TC Kimlik No gerekli'}),400
+        table_name = 'users'
+        insert_columns = ['tc_kimlik_no', 'email', 'password_hash', 'is_doctor']
+        insert_values = [tc_kimlik_no, email, password, False]
+        unique_constraint_column = 'tc_kimlik_no'
+    elif user_type == 'doctor':
+        if not institutional_id:
+            return jsonify({'message':'Doktor kaydı için Kurumsal ID gerekli'}),400
+        table_name = 'doctors'
+        insert_columns = ['name', 'institutional_id', 'email', 'password']
+        insert_values = [name, institutional_id, email, password]
+        unique_constraint_column = 'institutional_id'
+    elif user_type == 'hospital_admin':
+        if not institutional_id:
+            return jsonify({'message':'Hastane yönetimi kaydı için Kurumsal ID gerekli'}),400
+        table_name = 'hospital_admins'
+        insert_columns = ['name', 'institutional_id', 'email', 'password']
+        insert_values = [name, institutional_id, email, password]
+        unique_constraint_column = 'institutional_id'
+    else:
+        return jsonify({'message':'Geçersiz kullanıcı tipi belirtildi'}), 400
+
+    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    if user_type == 'patient':
+        insert_values[insert_columns.index('password_hash')] = hashed
+    else:
+        insert_values[insert_columns.index('password')] = hashed
+
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('INSERT INTO users (tc_kimlik_no,email,password_hash) VALUES (%s,%s,%s) RETURNING id',
-                    (tc_kimlik_no,email,hashed_string))
-        user_id = cur.fetchone()[0]
+        # Dinamik olarak insert sorgusu oluştur
+        cols = ', '.join(insert_columns)
+        placeholders = ', '.join(['%s'] * len(insert_columns))
+        query = f'INSERT INTO {table_name} ({cols}) VALUES ({placeholders}) RETURNING {unique_constraint_column}'
+
+        cur.execute(query, tuple(insert_values))
+        inserted_id = cur.fetchone()[0]
         conn.commit()
-        return jsonify({'message':'Kullanıcı kaydedildi','user_id':str(user_id)}),201
+
+        return jsonify({'message':'Kullanıcı başarıyla kaydedildi', f'{unique_constraint_column}': str(inserted_id), 'user_type': user_type}),201
+
     except psycopg2.errors.UniqueViolation:
         conn.rollback()
-        return jsonify({'message':'Bu kullanıcı zaten var'}),409
+        return jsonify({'message':f'Bu {unique_constraint_column} zaten kullanılıyor'}),409
     except Exception as e:
         conn.rollback()
+        logger.error('Kayıt hatası: %s', e, exc_info=True)
         return jsonify({'message':'Kayıt hatası','error':str(e)}),500
     finally:
         cur.close();conn.close()
@@ -209,45 +253,78 @@ def login():
     if not request.is_json:
         return jsonify({'message':'JSON formatı gerekli'}),400
     data = request.get_json()
-    tc = data.get('tc_kimlik_no')
-    pw = data.get('password')
-    if not tc or not pw:
-        return jsonify({'message':'TC Kimlik No ve şifre gerekli'}),400
+    identifier = data.get('identifier') # TC Kimlik No veya Kurumsal ID
+    email = data.get('email')
+    password = data.get('password')
+    user_type = data.get('user_type') # 'patient', 'doctor', 'hospital_admin'
+
+    if not identifier or not password or not user_type:
+        return jsonify({'message':'Kimlik (TC No/ID), e-posta, şifre ve kullanıcı tipi gerekli'}),400
+
+    table_name = None
+    identifier_column = None
+    user_id_column = None
+    password_column = None
+
+    if user_type == 'patient':
+        table_name = 'users'
+        identifier_column = 'tc_kimlik_no'
+        user_id_column = 'id'
+        password_column = 'password_hash'
+    elif user_type == 'doctor':
+        table_name = 'doctors'
+        identifier_column = 'institutional_id'
+        user_id_column = 'doctor_id'
+        password_column = 'password'
+    elif user_type == 'hospital_admin':
+        table_name = 'hospital_admins'
+        identifier_column = 'institutional_id'
+        user_id_column = 'admin_id'
+        password_column = 'password'
+    else:
+        return jsonify({'message':'Geçersiz kullanıcı tipi belirtildi'}), 400
+
     # Authenticate
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT id,password_hash FROM users WHERE tc_kimlik_no=%s',(tc,))
+        # Kullanıcı tipine göre ilgili tabloyu sorgula
+        cur.execute(f'SELECT {user_id_column}, {password_column} FROM {table_name} WHERE {identifier_column}=%s', (identifier,))
         user = cur.fetchone()
+
         if user:
-            logger.info('Veritabanından çekilen şifre hash: %s (Tip: %s)', user[1], type(user[1]))
-
-            # bcrypt.checkpw bytes bekler, veritabanından gelen stringi encode ediyoruz.
-            # Eğer user[1] veritabanından byte dizisi olarak geldiyse ve psycopg2 stringe çevirdiyse,
-            # bu stringin içeriği \x ile başlayan hex gösterimi olacaktır.
-            # Doğru karşılaştırma için bu stringi tekrar byte dizisine çevirmemiz gerekebilir.
-            # Ancak önceki denemeler syntax hatasına neden oldu.
-            # Veritabanından gelen değerin doğrudan bcrypt'in anlayacağı formatta string veya bytes olduğundan emin olmak en iyisidir.
-            # Geçici olarak, eğer string geliyorsa encode etmeyi deneyelim, byte geliyorsa direkt kullanalım.
-            hashed_password_for_check = None
+            # Veritabanından çekilen şifre hash: user[1] artık password_hash veya password
+            hashed_password_from_db = None
             if isinstance(user[1], str):
-                 # String ise encode et
-                 hashed_password_for_check = user[1].encode('utf-8')
+                 hashed_password_from_db = user[1].encode('utf-8')
             elif isinstance(user[1], bytes):
-                 # Zaten bytes ise direkt kullan
-                 hashed_password_for_check = user[1]
+                 hashed_password_from_db = user[1]
             else:
-                # Beklenmedik tip
-                logger.error('Beklenmedik şifre hash tipi: %s', type(user[1]))
-                return jsonify({'message':'Giriş hatası', 'error':'Beklenmedik şifre hash formatı.'}), 500
+                logger.error('Beklenmedik şifre formatı tipi: %s', type(user[1]))
+                return jsonify({'message':'Giriş hatası', 'error':'Beklenmedik şifre formatı.'}), 500
 
+            # bcrypt.checkpw karşılaştırması
+            if bcrypt.checkpw(password.encode('utf-8'), hashed_password_from_db):
+                 # Başarılı giriş - JWT token oluştur
+                # Token'a kullanıcı tipini ve ID'yi ekle
+                token_payload = {
+                    'user_id': str(user[0]),
+                    'user_type': user_type,
+                    'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24) # Token geçerlilik süresi
+                }
+                token = jwt.encode(token_payload,
+                                   app.config['SECRET_KEY'],
+                                   algorithm='HS256')
 
-        if not user or not bcrypt.checkpw(pw.encode('utf-8'), hashed_password_for_check):
+                return jsonify({'message':'Giriş başarılı','token':token, 'user_type': user_type}),200
+            else:
+                 # Şifre yanlış
+                return jsonify({'message':'Geçersiz kimlik veya şifre'}),401
+
+        else:
+            # Kullanıcı bulunamadı
             return jsonify({'message':'Geçersiz kimlik veya şifre'}),401
-        
-        token = jwt.encode({'user_id':str(user[0]),'exp':datetime.datetime.utcnow()+datetime.timedelta(hours=24)},
-                           app.config['SECRET_KEY'],algorithm='HS256')
-        return jsonify({'message':'Giriş başarılı','token':token}),200
+
     except psycopg2.OperationalError as e:
         logger.error('Veritabanı bağlantı veya işlem hatası: %s', e, exc_info=True)
         return jsonify({'message':'Giriş hatası', 'error':'Veritabanı bağlantı veya işlem hatası.'}),500

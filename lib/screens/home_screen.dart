@@ -24,7 +24,6 @@ class _HomeScreenState extends State<HomeScreen> {
     HaritaPage(),
     MesajlarPage(),
     ProfilPage(),
-    AyarlarPage(),
   ];
 
   @override
@@ -45,57 +44,64 @@ class _HomeScreenState extends State<HomeScreen> {
               // Bildirimler sayfası
             },
           ),
-          IconButton(
+          PopupMenuButton<String>(
             icon: const Icon(Icons.person),
-            onPressed: () {
-              // Profil sayfası
+            onSelected: (String result) {
+              if (result == 'logout') {
+                // Çıkış yap işlemi
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
+                  (route) => false,
+                );
+              } else if (result == 'language') {
+                // Dil seçeneği işlemi
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Dil seçeneği ayarları buraya gelecek.'),
+                  ),
+                );
+              }
             },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'logout',
+                child: Text('Çıkış Yap'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'language',
+                child: Text('Dil Seçeneği'),
+              ),
+            ],
           ),
         ],
       ),
       body: _pages[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 4,
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: HealthApp.primaryColor,
-          unselectedItemColor: Colors.grey[600],
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today),
-              label: 'Randevu',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.map),
-              label: 'Harita',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.message),
-              label: 'Mesajlar',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profilim',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: 'Ayarlar',
-            ),
-          ],
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today),
+            label: 'Randevu',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map),
+            label: 'Harita',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.message),
+            label: 'Mesajlar',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profilim',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
     );
   }
