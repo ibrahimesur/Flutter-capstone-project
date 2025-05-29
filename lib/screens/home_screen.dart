@@ -11,6 +11,7 @@ import '../widgets/custom_time_picker_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'semptom_tarama_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialTab;
@@ -34,13 +35,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialTab > 0 ? widget.initialTab -1 : 0;
+    _selectedIndex = widget.initialTab > 0 ? widget.initialTab - 1 : 0;
 
     _pages = [
       RandevuPage(onAppointmentBookedSuccessfully: _loadAppointments),
       HaritaPage(),
       MesajlarPage(),
       ProfilPage(),
+      SemptomTaramaScreen(),
     ];
 
     Future.delayed(Duration(milliseconds: 100), () {
@@ -59,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final hastaId = prefs.getString('hasta_id');
-      
+
       if (hastaId == null) {
         if (!mounted) return;
         throw Exception('Kullanıcı ID bulunamadı');
@@ -75,24 +77,29 @@ class _HomeScreenState extends State<HomeScreen> {
         final List<dynamic> appointmentsJson = json.decode(response.body);
         print('DEBUG: appointmentsJson: ' + appointmentsJson.toString());
         setState(() {
-          randevuList = appointmentsJson.map((json) => Randevu(
-            id: json['id'],
-            hastaId: json['hasta_id'],
-            department: json['department'],
-            doctor: json['doctor'],
-            date: DateTime.parse(json['randevu_tarihi']),
-            time: json['randevu_saati'],
-          )).toList();
-          
-          _upcomingAppointments = appointmentsJson.map((json) => {
-            'id': json['id'],
-            'hasta_id': json['hasta_id'],
-            'department': json['department'],
-            'doctor': json['doctor'],
-            'date': DateTime.parse(json['randevu_tarihi']),
-            'time': json['randevu_saati'],
-          }).toList();
-          print('DEBUG: _upcomingAppointments: ' + _upcomingAppointments.toString());
+          randevuList = appointmentsJson
+              .map((json) => Randevu(
+                    id: json['id'],
+                    hastaId: json['hasta_id'],
+                    department: json['department'],
+                    doctor: json['doctor'],
+                    date: DateTime.parse(json['randevu_tarihi']),
+                    time: json['randevu_saati'],
+                  ))
+              .toList();
+
+          _upcomingAppointments = appointmentsJson
+              .map((json) => {
+                    'id': json['id'],
+                    'hasta_id': json['hasta_id'],
+                    'department': json['department'],
+                    'doctor': json['doctor'],
+                    'date': DateTime.parse(json['randevu_tarihi']),
+                    'time': json['randevu_saati'],
+                  })
+              .toList();
+          print('DEBUG: _upcomingAppointments: ' +
+              _upcomingAppointments.toString());
           _isLoadingAppointments = false;
         });
       } else {
@@ -180,13 +187,19 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.person),
             label: 'Profil',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.medical_services),
+            label: 'Semptom Analiz',
+          ),
         ],
       ),
     );
   }
 
   Widget _buildUpcomingAppointments() {
-    print('DEBUG: _buildUpcomingAppointments çağrıldı, _upcomingAppointments: ' + _upcomingAppointments.toString());
+    print(
+        'DEBUG: _buildUpcomingAppointments çağrıldı, _upcomingAppointments: ' +
+            _upcomingAppointments.toString());
     if (_isLoadingAppointments) {
       return Center(child: CircularProgressIndicator());
     }
@@ -251,7 +264,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const Icon(Icons.access_time, size: 14, color: Colors.grey),
                 const SizedBox(width: 4),
                 Text(appointment['time'],
-                   style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ],
             ),
           ],
@@ -1461,7 +1474,7 @@ class SemptomAnalizSonucu extends StatelessWidget {
                 try {
                   final prefs = await SharedPreferences.getInstance();
                   final hastaId = prefs.getString('userId');
-                  
+
                   if (hastaId == null) {
                     throw Exception('Kullanıcı ID bulunamadı');
                   }
@@ -1474,7 +1487,8 @@ class SemptomAnalizSonucu extends StatelessWidget {
                       'doctor': doctor,
                       'department': department,
                       'date': selectedDate.toIso8601String(),
-                      'time': '${selectedTime.hour}:${selectedTime.minute.toString().padLeft(2, '0')}',
+                      'time':
+                          '${selectedTime.hour}:${selectedTime.minute.toString().padLeft(2, '0')}',
                     }),
                   );
 
@@ -2656,25 +2670,27 @@ class ProfilPage extends StatefulWidget {
 
 class _ProfilPageState extends State<ProfilPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _ageController = TextEditingController();
-  final _heightController = TextEditingController();
-  final _weightController = TextEditingController();
-  String _selectedBloodType = 'A+';
-  final List<String> _chronicDiseases = [];
-  final List<String> _allergies = [];
-  String _searchText = '';
+  bool _isLoading = false;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _heightController = TextEditingController();
+  final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _chronicDiseasesController =
+      TextEditingController();
+  final TextEditingController _allergiesController = TextEditingController();
+  String _selectedBloodType = 'A Rh+'; // Varsayılan kan grubu
 
   final List<String> _bloodTypes = [
-    'A+',
-    'A-',
-    'B+',
-    'B-',
-    'AB+',
-    'AB-',
-    '0+',
-    '0-'
+    'A Rh+',
+    'A Rh-',
+    'B Rh+',
+    'B Rh-',
+    'AB Rh+',
+    'AB Rh-',
+    '0 Rh+',
+    '0 Rh-'
   ];
+
   final List<String> _commonDiseases = [
     'Diyabet',
     'Hipertansiyon',
@@ -2683,6 +2699,7 @@ class _ProfilPageState extends State<ProfilPage> {
     'Kolesterol',
     'Tiroit',
   ];
+
   final List<String> _commonAllergies = [
     'Pollen',
     'Toz',
@@ -2693,7 +2710,113 @@ class _ProfilPageState extends State<ProfilPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hastaId = prefs.getString('hasta_id');
+
+      print(
+          'DEBUG: Profil yükleniyor, hastaId: $hastaId'); // hastaId değerini yazdırma
+
+      if (hastaId == null) {
+        throw Exception('Hasta ID bulunamadı');
+      }
+
+      final response = await http.get(
+        Uri.parse('http://localhost:8000/get-profile/$hastaId'),
+      );
+
+      print(
+          'DEBUG: Profil yükleme URLsi: http://localhost:8000/get-profile/$hastaId'); // Oluşturulan URL'yi yazdırma
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        _nameController.text = data['ad_soyad'] ?? '';
+        _ageController.text = data['yas']?.toString() ?? '';
+        _heightController.text = data['boy']?.toString() ?? '';
+        _weightController.text = data['kilo']?.toString() ?? '';
+        setState(() {
+          _selectedBloodType = data['kan_grubu'] ?? 'A Rh+';
+        });
+        _chronicDiseasesController.text = data['kronik_hastaliklar'] ?? '';
+        _allergiesController.text = data['alerjiler'] ?? '';
+      } else if (response.statusCode == 404) {
+        // Profil bulunamadı, form boş kalacak
+      } else {
+        throw Exception('Profil yüklenirken hata oluştu');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Profil yüklenirken hata oluştu: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hastaId = prefs.getString('hasta_id');
+
+      if (hastaId == null) {
+        throw Exception('Kullanıcı ID bulunamadı');
+      }
+
+      final response = await http.post(
+        Uri.parse('http://localhost:8000/update-profile'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'hasta_id': hastaId,
+          'ad_soyad': _nameController.text,
+          'yas': int.tryParse(_ageController.text),
+          'boy': int.tryParse(_heightController.text),
+          'kilo': double.tryParse(_weightController.text),
+          'kan_grubu': _selectedBloodType,
+          'kronik_hastaliklar': _chronicDiseasesController.text,
+          'alerjiler': _allergiesController.text,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Profil bilgileriniz başarıyla kaydedildi'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        throw Exception('Profil güncellenirken bir hata oluştu');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Hata: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -2777,16 +2900,22 @@ class _ProfilPageState extends State<ProfilPage> {
                         labelText: 'Kan Grubu',
                         prefixIcon: Icon(Icons.bloodtype),
                       ),
-                      items: _bloodTypes.map((String value) {
+                      items: _bloodTypes.map((String bloodType) {
                         return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
+                          value: bloodType,
+                          child: Text(bloodType),
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
                           _selectedBloodType = newValue!;
                         });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Lütfen kan grubunuzu seçin';
+                        }
+                        return null;
                       },
                     ),
                     SizedBox(height: 24),
@@ -2798,14 +2927,15 @@ class _ProfilPageState extends State<ProfilPage> {
                       ),
                     ),
                     SizedBox(height: 8),
-                    TextField(
+                    TextFormField(
+                      controller: _chronicDiseasesController,
                       decoration: InputDecoration(
                         hintText: 'Hastalık ara...',
                         prefixIcon: Icon(Icons.search),
                       ),
                       onChanged: (value) {
                         setState(() {
-                          _searchText = value;
+                          _chronicDiseasesController.text = value;
                         });
                       },
                     ),
@@ -2814,16 +2944,19 @@ class _ProfilPageState extends State<ProfilPage> {
                       spacing: 8,
                       runSpacing: 8,
                       children: _commonDiseases.map((disease) {
-                        final isSelected = _chronicDiseases.contains(disease);
+                        final isSelected =
+                            _chronicDiseasesController.text.contains(disease);
                         return FilterChip(
                           label: Text(disease),
                           selected: isSelected,
                           onSelected: (bool selected) {
                             setState(() {
                               if (selected) {
-                                _chronicDiseases.add(disease);
+                                _chronicDiseasesController.text += ', $disease';
                               } else {
-                                _chronicDiseases.remove(disease);
+                                _chronicDiseasesController.text =
+                                    _chronicDiseasesController.text
+                                        .replaceAll(', $disease', '');
                               }
                             });
                           },
@@ -2839,20 +2972,36 @@ class _ProfilPageState extends State<ProfilPage> {
                       ),
                     ),
                     SizedBox(height: 8),
+                    TextFormField(
+                      controller: _allergiesController,
+                      decoration: InputDecoration(
+                        hintText: 'Alerji ara...',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _allergiesController.text = value;
+                        });
+                      },
+                    ),
+                    SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: _commonAllergies.map((allergy) {
-                        final isSelected = _allergies.contains(allergy);
+                        final isSelected =
+                            _allergiesController.text.contains(allergy);
                         return FilterChip(
                           label: Text(allergy),
                           selected: isSelected,
                           onSelected: (bool selected) {
                             setState(() {
                               if (selected) {
-                                _allergies.add(allergy);
+                                _allergiesController.text += ', $allergy';
                               } else {
-                                _allergies.remove(allergy);
+                                _allergiesController.text = _allergiesController
+                                    .text
+                                    .replaceAll(', $allergy', '');
                               }
                             });
                           },
@@ -2861,17 +3010,7 @@ class _ProfilPageState extends State<ProfilPage> {
                     ),
                     SizedBox(height: 24),
                     ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // Profil bilgilerini kaydet
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Profil bilgileriniz kaydedildi'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        }
-                      },
+                      onPressed: _saveProfile,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HealthApp.primaryColor,
                         minimumSize: Size(double.infinity, 50),
@@ -2931,7 +3070,7 @@ class _RandevuPageState extends State<RandevuPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final hastaId = prefs.getString('hasta_id');
-      
+
       if (hastaId == null) {
         if (!mounted) return;
         throw Exception('Kullanıcı ID bulunamadı');
@@ -2947,24 +3086,29 @@ class _RandevuPageState extends State<RandevuPage> {
         final List<dynamic> appointmentsJson = json.decode(response.body);
         print('DEBUG: appointmentsJson: ' + appointmentsJson.toString());
         setState(() {
-          randevuList = appointmentsJson.map((json) => Randevu(
-            id: json['id'],
-            hastaId: json['hasta_id'],
-            department: json['department'],
-            doctor: json['doctor'],
-            date: DateTime.parse(json['randevu_tarihi']),
-            time: json['randevu_saati'],
-          )).toList();
-          
-          _upcomingAppointments = appointmentsJson.map((json) => {
-            'id': json['id'],
-            'hasta_id': json['hasta_id'],
-            'department': json['department'],
-            'doctor': json['doctor'],
-            'date': DateTime.parse(json['randevu_tarihi']),
-            'time': json['randevu_saati'],
-          }).toList();
-          print('DEBUG: _upcomingAppointments: ' + _upcomingAppointments.toString());
+          randevuList = appointmentsJson
+              .map((json) => Randevu(
+                    id: json['id'],
+                    hastaId: json['hasta_id'],
+                    department: json['department'],
+                    doctor: json['doctor'],
+                    date: DateTime.parse(json['randevu_tarihi']),
+                    time: json['randevu_saati'],
+                  ))
+              .toList();
+
+          _upcomingAppointments = appointmentsJson
+              .map((json) => {
+                    'id': json['id'],
+                    'hasta_id': json['hasta_id'],
+                    'department': json['department'],
+                    'doctor': json['doctor'],
+                    'date': DateTime.parse(json['randevu_tarihi']),
+                    'time': json['randevu_saati'],
+                  })
+              .toList();
+          print('DEBUG: _upcomingAppointments: ' +
+              _upcomingAppointments.toString());
           _isLoadingAppointments = false;
         });
       } else {
@@ -2985,7 +3129,8 @@ class _RandevuPageState extends State<RandevuPage> {
     // Randevu listesini yeniden yükle
     _loadAppointments();
     // Form alanlarını temizle (RandevuAyarlamaModalState üzerinden erişim gerekli)
-    _bookingFormKey.currentState?.resetForm(); // RandevuAyarlamaModalState'e resetForm metodu eklememiz gerekecek
+    _bookingFormKey.currentState
+        ?.resetForm(); // RandevuAyarlamaModalState'e resetForm metodu eklememiz gerekecek
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -2997,7 +3142,9 @@ class _RandevuPageState extends State<RandevuPage> {
 
   // Yaklaşan Randevular widget'ı
   Widget _buildUpcomingAppointments() {
-    print('DEBUG: _buildUpcomingAppointments çağrıldı, _upcomingAppointments: ' + _upcomingAppointments.toString());
+    print(
+        'DEBUG: _buildUpcomingAppointments çağrıldı, _upcomingAppointments: ' +
+            _upcomingAppointments.toString());
     if (_isLoadingAppointments) {
       return Center(child: CircularProgressIndicator());
     }
@@ -3062,7 +3209,7 @@ class _RandevuPageState extends State<RandevuPage> {
                 const Icon(Icons.access_time, size: 14, color: Colors.grey),
                 const SizedBox(width: 4),
                 Text(appointment['time'],
-                   style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ],
             ),
           ],
@@ -3087,13 +3234,31 @@ class _RandevuPageState extends State<RandevuPage> {
             ),
           ),
           SizedBox(height: 16),
+          ElevatedButton.icon(
+            icon: Icon(Icons.medical_services),
+            label: Text('Semptom Analizi ile Randevu Al'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HealthApp.primaryColor,
+              minimumSize: Size(double.infinity, 50),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SemptomTaramaScreen(),
+                ),
+              );
+            },
+          ),
+          SizedBox(height: 16),
           RandevuAyarlamaModal(
             key: _bookingFormKey,
             onAppointmentBooked: _onAppointmentBookedSuccess,
           ),
           SizedBox(height: 24),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Text(
               'Yaklaşan Randevular',
               style: TextStyle(

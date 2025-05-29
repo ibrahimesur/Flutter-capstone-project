@@ -756,8 +756,121 @@ def update_availability_status(takvim_id):
         logger.error('Takvim durumu güncelleme hatası: %s', e, exc_info=True)
         return jsonify({'message': 'Takvim durumu güncellenirken hata oluştu', 'error': str(e)}), 500
     finally:
-        cur.close()
-        conn.close()
+        if 'cur' in locals() and cur is not None:
+            cur.close()
+        if 'conn' in locals() and conn is not None:
+            conn.close()
+
+@app.route('/get-profile/<hasta_id>', methods=['GET'])
+def get_profile(hasta_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT ad_soyad, yas, boy, kilo, kan_grubu, kronik_hastaliklar, alerjiler
+            FROM saglik_profili
+            WHERE hasta_id = %s
+        """, (hasta_id,))
+        
+        profile = cur.fetchone()
+        
+        if not profile:
+            return jsonify({'message': 'Profil bulunamadı'}), 404
+
+        profile_data = {
+            'ad_soyad': profile[0],
+            'yas': profile[1],
+            'boy': profile[2],
+            'kilo': float(profile[3]) if profile[3] else None,
+            'kan_grubu': profile[4],
+            'kronik_hastaliklar': profile[5],
+            'alerjiler': profile[6]
+        }
+
+        return jsonify(profile_data), 200
+
+    except Exception as e:
+        logger.error('Profil getirme hatası: %s', e, exc_info=True)
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'cur' in locals() and cur is not None:
+            cur.close()
+        if 'conn' in locals() and conn is not None:
+            conn.close()
+
+@app.route('/update-profile', methods=['POST'])
+def update_profile():
+    if not request.is_json:
+        return jsonify({'message': 'JSON formatı gerekli'}), 400
+    
+    data = request.get_json()
+    hasta_id = data.get('hasta_id')
+    
+    if not hasta_id:
+        return jsonify({'message': 'Hasta ID gerekli'}), 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Önce profil var mı kontrol et
+        cur.execute("SELECT 1 FROM saglik_profili WHERE hasta_id = %s", (hasta_id,))
+        profile_exists = cur.fetchone() is not None
+
+        if profile_exists:
+            # Profili güncelle
+            cur.execute("""
+                UPDATE saglik_profili
+                SET ad_soyad = %s,
+                    yas = %s,
+                    boy = %s,
+                    kilo = %s,
+                    kan_grubu = %s,
+                    kronik_hastaliklar = %s,
+                    alerjiler = %s
+                WHERE hasta_id = %s
+            """, (
+                data.get('ad_soyad'),
+                data.get('yas'),
+                data.get('boy'),
+                data.get('kilo'),
+                data.get('kan_grubu'),
+                data.get('kronik_hastaliklar'),
+                data.get('alerjiler'),
+                hasta_id
+            ))
+        else:
+            # Yeni profil oluştur
+            cur.execute("""
+                INSERT INTO saglik_profili (
+                    hasta_id, ad_soyad, yas, boy, kilo, kan_grubu, 
+                    kronik_hastaliklar, alerjiler
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                hasta_id,
+                data.get('ad_soyad'),
+                data.get('yas'),
+                data.get('boy'),
+                data.get('kilo'),
+                data.get('kan_grubu'),
+                data.get('kronik_hastaliklar'),
+                data.get('alerjiler')
+            ))
+
+        conn.commit()
+        return jsonify({'message': 'Profil başarıyla güncellendi'}), 200
+
+    except Exception as e:
+        conn.rollback()
+        logger.error('Profil güncelleme hatası: %s', e, exc_info=True)
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'cur' in locals() and cur is not None:
+            cur.close()
+        if 'conn' in locals() and conn is not None:
+            conn.close()
 
 if __name__ == '__main__':
     logger.info('Sunucu başlatılıyor…')
