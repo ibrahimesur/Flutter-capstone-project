@@ -449,11 +449,10 @@ def get_appointments(hasta_id):
         cur = conn.cursor()
 
         cur.execute("""
-            SELECT r.id, r.hasta_id, d.name as doctor, dep.name as department, 
+            SELECT r.id, r.hasta_id, d.name as doctor, d.department, 
                    r.randevu_tarihi, r.randevu_saati
             FROM randevular r
             JOIN doctors d ON r.doctor_id = d.doctor_id
-            JOIN departments dep ON d.department_id = dep.department_id
             WHERE r.hasta_id = %s
             ORDER BY r.randevu_tarihi ASC, r.randevu_saati ASC
         """, (hasta_id,))

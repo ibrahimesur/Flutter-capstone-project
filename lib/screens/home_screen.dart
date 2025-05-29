@@ -25,12 +25,22 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Randevu> randevuList = [];
   bool isLoading = false;
   String? error;
+  bool _isBookingFormVisible = false; // Yeni randevu formu görünürlüğü
+
+  late final List<Widget> _pages; // pages artık initState'te initialize edilecek
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialTab > 0 ? widget.initialTab -1 : 0;
-    // SharedPreferences'ın veriyi yüklemesine izin vermek için küçük bir gecikme ekleyelim
+
+    _pages = [
+      RandevuPage(onAppointmentBookedSuccessfully: _loadAppointments), // Yeni RandevuPage callback ile
+      HaritaPage(),
+      MesajlarPage(),
+      ProfilPage(),
+    ];
+
     Future.delayed(Duration(milliseconds: 100), () {
       _loadAppointments();
     });
@@ -44,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final hastaId = prefs.getString('hastaId');
+      final hastaId = prefs.getString('hasta_id');
       
       if (hastaId == null) {
         throw Exception('Kullanıcı ID bulunamadı');
@@ -78,13 +88,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  final List<Widget> _pages = const [
-    RandevuPage(),
-    HaritaPage(),
-    MesajlarPage(),
-    ProfilPage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -101,14 +104,12 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.person),
             onSelected: (String result) {
               if (result == 'logout') {
-                // Çıkış yap işlemi
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/login',
                   (route) => false,
                 );
               } else if (result == 'language') {
-                // Dil seçeneği işlemi
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Dil seçeneği ayarları buraya gelecek.'),
@@ -276,6 +277,13 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  // "Yeni Randevu" butonuna basıldığında formun görünürlüğünü değiştiren fonksiyon
+  void _toggleBookingFormVisibility() {
+    setState(() {
+      _isBookingFormVisible = !_isBookingFormVisible;
+    });
   }
 }
 
@@ -3354,75 +3362,82 @@ class _ProfilPageState extends State<ProfilPage> {
 }
 
 class RandevuPage extends StatefulWidget {
-  const RandevuPage({super.key});
+  // Randevu başarıyla kaydedildiğinde çağrılacak callback
+  final Function()? onAppointmentBookedSuccessfully;
+
+  const RandevuPage({super.key, this.onAppointmentBookedSuccessfully});
 
   @override
   _RandevuPageState createState() => _RandevuPageState();
 }
 
 class _RandevuPageState extends State<RandevuPage> {
+  bool _isBookingFormVisible = false; // Formun görünürlüğünü kontrol eden state
+
+  // Randevu başarıyla kaydedildiğinde formu gizlemek için callback
+  void _onAppointmentBooked(Randevu appointment) {
+    setState(() {
+      _isBookingFormVisible = false;
+    });
+    // Randevu başarıyla eklendiğinde üst widget'a (HomeScreen) haber ver
+    if (widget.onAppointmentBookedSuccessfully != null) {
+      widget.onAppointmentBookedSuccessfully!();
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Randevu başarıyla oluşturuldu!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Randevularım',
-            style: GoogleFonts.poppins(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: HealthApp.primaryColor,
-            ),
-          ),
-          SizedBox(height: 16),
-          ElevatedButton.icon(
-            icon: Icon(Icons.add),
-            label: Text('Yeni Randevu'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HealthApp.primaryColor,
-              minimumSize: Size(double.infinity, 50),
-            ),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      child: _isBookingFormVisible
+          ? RandevuAyarlamaModal( // Formu doğrudan göster
+              onAppointmentBooked: _onAppointmentBooked, // Callback'i ata
+            )
+          : Column( // Form gizliyse mevcut içeriği göster
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Randevularım',
+                  style: GoogleFonts.poppins(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: HealthApp.primaryColor,
+                  ),
                 ),
-                builder: (context) => RandevuAyarlamaModal(
-                  onAppointmentBooked: (appointment) {
-                    Navigator.pop(context);
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/',
-                      (route) => false,
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Randevu başarıyla oluşturuldu!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
+                SizedBox(height: 16),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.add),
+                  label: Text('Yeni Randevu'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HealthApp.primaryColor,
+                    minimumSize: Size(double.infinity, 50),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isBookingFormVisible = true; // Butona basınca formu göster
+                    });
                   },
                 ),
-              );
-            },
-          ),
-          SizedBox(height: 24),
-          Text(
-            'Yaklaşan Randevular',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: HealthApp.primaryColor,
+                SizedBox(height: 24),
+                // Text(
+                //   'Yaklaşan Randevular', // Bu başlığı kaldırıyoruz
+                //   style: TextStyle(
+                //     fontSize: 20,
+                //     fontWeight: FontWeight.bold,
+                //     color: HealthApp.primaryColor,
+                //   ),
+                // ),
+                // SizedBox(height: 16), // Ve bu boşluğu da kaldırıyoruz
+                // Randevu listesi buraya gelecek (Şu an HomeScreenState'te)
+              ],
             ),
-          ),
-          SizedBox(height: 16),
-          // Randevu listesi buraya gelecek
-        ],
-      ),
     );
   }
 }

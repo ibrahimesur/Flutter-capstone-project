@@ -204,7 +204,7 @@ class _RandevuAyarlamaModalState extends State<RandevuAyarlamaModal> {
           ),
         );
 
-        Navigator.pop(context);
+        Navigator.pop(context); // Modalı kapat
       } else {
         // Hata durumu
         final errorBody = jsonDecode(response.body);
