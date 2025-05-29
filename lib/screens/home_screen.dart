@@ -49,6 +49,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadAppointments() async {
+    print('DEBUG: _loadAppointments çağrıldı');
+    if (!mounted) return;
     setState(() {
       _isLoadingAppointments = true;
       error = null;
@@ -59,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final hastaId = prefs.getString('hasta_id');
       
       if (hastaId == null) {
+        if (!mounted) return;
         throw Exception('Kullanıcı ID bulunamadı');
       }
 
@@ -66,8 +69,11 @@ class _HomeScreenState extends State<HomeScreen> {
         Uri.parse('http://localhost:8000/get-appointments/$hastaId'),
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final List<dynamic> appointmentsJson = json.decode(response.body);
+        print('DEBUG: appointmentsJson: ' + appointmentsJson.toString());
         setState(() {
           randevuList = appointmentsJson.map((json) => Randevu(
             id: json['id'],
@@ -86,13 +92,14 @@ class _HomeScreenState extends State<HomeScreen> {
             'date': DateTime.parse(json['randevu_tarihi']),
             'time': json['randevu_saati'],
           }).toList();
-          
+          print('DEBUG: _upcomingAppointments: ' + _upcomingAppointments.toString());
           _isLoadingAppointments = false;
         });
       } else {
         throw Exception('Randevular yüklenirken bir hata oluştu');
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         error = e.toString();
         _isLoadingAppointments = false;
@@ -179,41 +186,28 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildUpcomingAppointments() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Text(
-            'Yaklaşan Randevular',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: HealthApp.primaryColor,
-            ),
-          ),
-        ),
-        _isLoadingAppointments
-            ? Center(child: CircularProgressIndicator())
-            : _upcomingAppointments.isEmpty
-                ? Center(child: Text('Yaklaşan randevunuz bulunmamaktadır.'))
-                : GridView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: 8.0),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // 2 sütun
-                      crossAxisSpacing: 8.0, // Sütunlar arası boşluk
-                      mainAxisSpacing: 8.0, // Satırlar arası boşluk
-                      childAspectRatio: 1.7, // Kartların en boy oranı - 1.0 yerine 1.7 yapıldı
-                    ),
-                    itemCount: _upcomingAppointments.length,
-                    itemBuilder: (context, index) {
-                      final appointment = _upcomingAppointments[index];
-                      return _buildAppointmentCard(appointment);
-                    },
-                  ),
-      ],
+    print('DEBUG: _buildUpcomingAppointments çağrıldı, _upcomingAppointments: ' + _upcomingAppointments.toString());
+    if (_isLoadingAppointments) {
+      return Center(child: CircularProgressIndicator());
+    }
+    if (_upcomingAppointments.isEmpty) {
+      return Center(child: Text('Yaklaşan randevunuz bulunmamaktadır.'));
+    }
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(horizontal: 8.0),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 8.0,
+        mainAxisSpacing: 8.0,
+        childAspectRatio: 1.7,
+      ),
+      itemCount: _upcomingAppointments.length,
+      itemBuilder: (context, index) {
+        final appointment = _upcomingAppointments[index];
+        return _buildAppointmentCard(appointment);
+      },
     );
   }
 
@@ -2928,6 +2922,7 @@ class _RandevuPageState extends State<RandevuPage> {
 
   // Randevu listesini veritabanından çeken fonksiyon
   Future<void> _loadAppointments() async {
+    if (!mounted) return;
     setState(() {
       _isLoadingAppointments = true;
       error = null;
@@ -2938,6 +2933,7 @@ class _RandevuPageState extends State<RandevuPage> {
       final hastaId = prefs.getString('hasta_id');
       
       if (hastaId == null) {
+        if (!mounted) return;
         throw Exception('Kullanıcı ID bulunamadı');
       }
 
@@ -2945,8 +2941,11 @@ class _RandevuPageState extends State<RandevuPage> {
         Uri.parse('http://localhost:8000/get-appointments/$hastaId'),
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final List<dynamic> appointmentsJson = json.decode(response.body);
+        print('DEBUG: appointmentsJson: ' + appointmentsJson.toString());
         setState(() {
           randevuList = appointmentsJson.map((json) => Randevu(
             id: json['id'],
@@ -2965,13 +2964,14 @@ class _RandevuPageState extends State<RandevuPage> {
             'date': DateTime.parse(json['randevu_tarihi']),
             'time': json['randevu_saati'],
           }).toList();
-          
+          print('DEBUG: _upcomingAppointments: ' + _upcomingAppointments.toString());
           _isLoadingAppointments = false;
         });
       } else {
         throw Exception('Randevular yüklenirken bir hata oluştu');
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         error = e.toString();
         _isLoadingAppointments = false;
@@ -2981,6 +2981,7 @@ class _RandevuPageState extends State<RandevuPage> {
 
   // Randevu başarıyla kaydedildiğinde çalışacak callback
   void _onAppointmentBookedSuccess(Randevu appointment) {
+    print('DEBUG: _onAppointmentBookedSuccess çağrıldı');
     // Randevu listesini yeniden yükle
     _loadAppointments();
     // Form alanlarını temizle (RandevuAyarlamaModalState üzerinden erişim gerekli)
@@ -2996,41 +2997,28 @@ class _RandevuPageState extends State<RandevuPage> {
 
   // Yaklaşan Randevular widget'ı
   Widget _buildUpcomingAppointments() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Text(
-            'Yaklaşan Randevular',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: HealthApp.primaryColor,
-            ),
-          ),
-        ),
-        _isLoadingAppointments
-            ? Center(child: CircularProgressIndicator())
-            : _upcomingAppointments.isEmpty
-                ? Center(child: Text('Yaklaşan randevunuz bulunmamaktadır.'))
-                : GridView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: 8.0),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // 2 sütun
-                      crossAxisSpacing: 8.0, // Sütunlar arası boşluk
-                      mainAxisSpacing: 8.0, // Satırlar arası boşluk
-                      childAspectRatio: 1.7, // Kartların en boy oranı - 1.0 yerine 1.7 yapıldı
-                    ),
-                    itemCount: _upcomingAppointments.length,
-                    itemBuilder: (context, index) {
-                      final appointment = _upcomingAppointments[index];
-                      return _buildAppointmentCard(appointment);
-                    },
-                  ),
-      ],
+    print('DEBUG: _buildUpcomingAppointments çağrıldı, _upcomingAppointments: ' + _upcomingAppointments.toString());
+    if (_isLoadingAppointments) {
+      return Center(child: CircularProgressIndicator());
+    }
+    if (_upcomingAppointments.isEmpty) {
+      return Center(child: Text('Yaklaşan randevunuz bulunmamaktadır.'));
+    }
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(horizontal: 8.0),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 8.0,
+        mainAxisSpacing: 8.0,
+        childAspectRatio: 1.7,
+      ),
+      itemCount: _upcomingAppointments.length,
+      itemBuilder: (context, index) {
+        final appointment = _upcomingAppointments[index];
+        return _buildAppointmentCard(appointment);
+      },
     );
   }
 
@@ -3087,27 +3075,37 @@ class _RandevuPageState extends State<RandevuPage> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
-      child: Column( // Form ve liste yan yana değil, alt alta olacak
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                 Text(
-                  'Randevu Bilgileri', // Yeni başlık
-                  style: GoogleFonts.poppins(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: HealthApp.primaryColor,
-                  ),
-                ),
-                SizedBox(height: 16),
-                RandevuAyarlamaModal( // Randevu ayarlama formunu direkt ekliyoruz
-                   key: _bookingFormKey, // Form state'ine erişim için key atıyoruz
-                  onAppointmentBooked: _onAppointmentBookedSuccess, // Baş başarı callback'ini bağlıyoruz
-                ),
-                SizedBox(height: 24),
-                // Yaklaşan Randevular başlığı _buildUpcomingAppointments içinde olacak
-                _buildUpcomingAppointments(),
-              ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Randevu Bilgileri',
+            style: GoogleFonts.poppins(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: HealthApp.primaryColor,
             ),
+          ),
+          SizedBox(height: 16),
+          RandevuAyarlamaModal(
+            key: _bookingFormKey,
+            onAppointmentBooked: _onAppointmentBookedSuccess,
+          ),
+          SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Text(
+              'Yaklaşan Randevular',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: HealthApp.primaryColor,
+              ),
+            ),
+          ),
+          _buildUpcomingAppointments(),
+        ],
+      ),
     );
   }
 }

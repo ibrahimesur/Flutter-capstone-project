@@ -45,20 +45,25 @@ class RandevuAyarlamaModalState extends State<RandevuAyarlamaModal> {
 
   // Tüm doktorları backend'den çeken fonksiyon
   Future<void> _fetchDoctors() async {
+    if (!mounted) return;
     setState(() { _isLoading = true; });
     try {
       _allDoctors = await _randevuService.fetchDoctors();
+      if (!mounted) return;
       // Eğer initialDepartment belirtildiyse, ilgili doktorları filtrele ve ilkini seç
       if (widget.initialDepartment != null && _allDoctors.isNotEmpty) {
         final filteredDoctors = _allDoctors.where((doc) => doc['department'] == widget.initialDepartment).toList();
         if (filteredDoctors.isNotEmpty) {
-          selectedDepartment = widget.initialDepartment;
-          // İlk doktoru otomatik seç ve müsaitliği çek
-          selectedDoctor = filteredDoctors.first;
-          selectedDoctorId = selectedDoctor!['doctor_id'].toString();
+          setState(() {
+            selectedDepartment = widget.initialDepartment;
+            // İlk doktoru otomatik seç ve müsaitliği çek
+            selectedDoctor = filteredDoctors.first;
+            selectedDoctorId = selectedDoctor!['doctor_id'].toString();
+          });
           _fetchDoctorAvailability();
         } else {
           // Belirtilen departmanda doktor yoksa uyar
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Belirtilen bölümde doktor bulunamadı.')),
           );
@@ -66,17 +71,19 @@ class RandevuAyarlamaModalState extends State<RandevuAyarlamaModal> {
       }
     } catch (e) {
       print('Doktorlar çekilirken hata: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Doktor listesi yüklenemedi: ${e.toString()}')),
       );
     } finally {
+      if (!mounted) return;
       setState(() { _isLoading = false; });
     }
   }
 
   // Seçili doktorun müsaitliğini backend'den çeken fonksiyon
   Future<void> _fetchDoctorAvailability() async {
-    if (selectedDoctorId == null) return;
+    if (selectedDoctorId == null || !mounted) return;
 
     try {
       // Backend'den müsaitlik verisini çek
@@ -86,11 +93,13 @@ class RandevuAyarlamaModalState extends State<RandevuAyarlamaModal> {
         DateTime.now().add(const Duration(days: 30)),
       );
 
+      if (!mounted) return;
       setState(() {
         doctorAvailabilityData = availabilityData;
       });
     } catch (e) {
       print('Müsaitlik verisi çekilirken hata: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Müsaitlik verisi çekilirken hata oluştu: $e'),
