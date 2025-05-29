@@ -42,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
       HaritaPage(),
       MesajlarPage(),
       ProfilPage(),
+      const SemptomTaramaScreen(),
     ];
 
     Future.delayed(Duration(milliseconds: 100), () {

@@ -205,24 +205,22 @@ def register():
         if not institutional_id:
             return jsonify({'message':'Doktor kaydı için Kurumsal ID gerekli'}),400
         table_name = 'doctors'
-        insert_columns = ['name', 'institutional_id', 'email', 'password']
+        insert_columns = ['name', 'institutional_id', 'email', 'password_hash']
         insert_values = [name, institutional_id, email, password]
         unique_constraint_column = 'institutional_id'
     elif user_type == 'hospital_admin':
         if not institutional_id:
             return jsonify({'message':'Hastane yönetimi kaydı için Kurumsal ID gerekli'}),400
         table_name = 'hospital_admins'
-        insert_columns = ['name', 'institutional_id', 'email', 'password']
-        insert_values = [name, institutional_id, email, password]
+        insert_columns = ['institutional_id', 'hospital_name']
+        insert_values = [institutional_id, data.get('hospital_name')]
         unique_constraint_column = 'institutional_id'
     else:
         return jsonify({'message':'Geçersiz kullanıcı tipi belirtildi'}), 400
 
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    if user_type == 'patient':
+    if user_type == 'patient' or user_type == 'doctor':
         insert_values[insert_columns.index('password_hash')] = hashed
-    else:
-        insert_values[insert_columns.index('password')] = hashed
 
     try:
         conn = get_db_connection()
@@ -266,22 +264,26 @@ def login():
     identifier_column = None
     user_id_column = None
     password_column = None
+    email_column = None
 
     if user_type == 'patient':
         table_name = 'users'
         identifier_column = 'tc_kimlik_no'
         user_id_column = 'id'
         password_column = 'password_hash'
+        email_column = 'email'
     elif user_type == 'doctor':
         table_name = 'doctors'
         identifier_column = 'institutional_id'
         user_id_column = 'doctor_id'
-        password_column = 'password'
+        password_column = 'password_hash'
+        email_column = 'email'
     elif user_type == 'hospital_admin':
         table_name = 'hospital_admins'
         identifier_column = 'institutional_id'
         user_id_column = 'admin_id'
-        password_column = 'password'
+        password_column = 'password_hash'
+        email_column = 'email'
     else:
         return jsonify({'message':'Geçersiz kullanıcı tipi belirtildi'}), 400
 
@@ -289,20 +291,18 @@ def login():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute(f'SELECT {user_id_column}, {password_column} FROM {table_name} WHERE {identifier_column}=%s', (identifier,))
+        cur.execute(f'SELECT {user_id_column}, {password_column}, {email_column} FROM {table_name} WHERE {identifier_column}=%s', (identifier,))
         user = cur.fetchone()
 
         if user:
+            logger.info('DEBUG: User found: %s', user) # User objesini logla
             hashed_password_from_db = None
-            if isinstance(user[1], str):
-                 hashed_password_from_db = user[1].encode('utf-8')
-            elif isinstance(user[1], bytes):
-                 hashed_password_from_db = user[1]
-            else:
-                logger.error('Beklenmedik şifre formatı tipi: %s', type(user[1]))
-                return jsonify({'message':'Giriş hatası', 'error':'Beklenmedik şifre formatı.'}), 500
+            if user[1] is not None:
+                # Veritabanından çekilen şifreyi her zaman bytes türüne dönüştür
+                hashed_password_from_db = bytes(user[1]) if isinstance(user[1], memoryview) else str(user[1]).encode('utf-8')
+                logger.info('DEBUG: Hashed password from DB (type: %s): %s', type(hashed_password_from_db), hashed_password_from_db) # Hashed şifreyi ve türünü logla
 
-            if bcrypt.checkpw(password.encode('utf-8'), hashed_password_from_db):
+            if hashed_password_from_db and bcrypt.checkpw(password.encode('utf-8'), hashed_password_from_db):
                  user_id_value = user[0]
 
                  if user_type == 'patient':
