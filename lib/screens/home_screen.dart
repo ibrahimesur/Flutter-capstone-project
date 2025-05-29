@@ -42,7 +42,6 @@ class _HomeScreenState extends State<HomeScreen> {
       HaritaPage(),
       MesajlarPage(),
       ProfilPage(),
-      SemptomTaramaScreen(),
     ];
 
     Future.delayed(Duration(milliseconds: 100), () {
@@ -186,10 +185,6 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profil',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.medical_services),
-            label: 'Semptom Analiz',
           ),
         ],
       ),
