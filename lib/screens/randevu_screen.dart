@@ -14,13 +14,10 @@ class _RandevuScreenState extends State<RandevuScreen> {
   DateTime? secilenTarih;
   String? secilenSaat;
 
-  final List<String> bolumler = [
-    'Dahiliye',
-    'Kardiyoloji',
-    'Nöroloji',
-    'Ortopedi'
-  ];
-  final List<String> saatler = ['09:00', '09:30', '10:00', '10:30', '11:00'];
+  // TODO: Backend'den bölümleri çek
+  final List<String> bolumler = [];
+  // TODO: Backend'den seçilen doktor ve tarihe göre müsait saatleri çek
+  final List<String> saatler = [];
 
   @override
   Widget build(BuildContext context) {

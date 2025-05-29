@@ -9,61 +9,8 @@ class HospitalInfoTab extends StatefulWidget {
 }
 
 class _HospitalInfoTabState extends State<HospitalInfoTab> {
-  // Örnek hastane bilgileri
-  final Map<String, dynamic> _hospitalInfo = {
-    'name': 'Merkez Şehir Hastanesi',
-    'address': 'Atatürk Bulvarı No: 125, Merkez/Ankara',
-    'phone': '+90 312 123 4567',
-    'email': 'info@merkez-hastane.com',
-    'website': 'www.merkez-hastane.com',
-    'foundationYear': '1995',
-    'capacity': {
-      'beds': 250,
-      'icuBeds': 35,
-      'operatingRooms': 8,
-      'emergencyCapacity': 50,
-    },
-    'departments': [
-      'Kardiyoloji',
-      'Nöroloji',
-      'Ortopedi',
-      'Genel Cerrahi',
-      'Pediatri',
-      'Kadın Hastalıkları ve Doğum',
-      'Dahiliye',
-      'Göz Hastalıkları',
-      'Kulak Burun Boğaz',
-      'Üroloji',
-    ],
-    'staff': {
-      'doctors': 75,
-      'nurses': 150,
-      'technicians': 50,
-      'administrative': 40,
-      'other': 30,
-    },
-    'stats': {
-      'dailyPatients': 750,
-      'monthlyOperations': 450,
-      'bedOccupancyRate': 78,
-      'emergencyVisitsPerDay': 120,
-    },
-    'workingHours': {
-      'doktor': '08:00 - 17:00 (Nöbet gününe göre değişebilir)',
-      'hemşire': '08:00 - 20:00 (Vardiyalı sistem)',
-      'teknisyen': '08:00 - 17:00',
-      'idari_personel': '08:30 - 17:30', 
-      'temizlik': '07:00 - 19:00 (Vardiyalı sistem)',
-      'güvenlik': '24 saat (Vardiyalı sistem)',
-      'acil_servis': '24 saat hizmet',
-    },
-    'insurances': [
-      'SGK',
-      'Özel Sigortalar',
-      'Tamamlayıcı Sigortalar',
-      'Anlaşmalı Kurumlar',
-    ],
-  };
+  // TODO: Backend'den hastane bilgilerini çek
+  Map<String, dynamic> _hospitalInfo = {};
 
   bool _isEditing = false;
   late TextEditingController _nameController;

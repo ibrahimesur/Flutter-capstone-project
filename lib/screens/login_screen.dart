@@ -79,25 +79,29 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           }),
         );
 
+        if (!mounted) return; // Widget dispose edilmişse işlemi sonlandır
+
         if (response.statusCode == 200) {
           final responseData = json.decode(response.body);
           print('Giriş başarılı: ${responseData['message']}');
           
           // Başarılı hasta girişi durumunda hasta ID'sini kaydet
           if (userType == 'patient') {
-             // Backend'den dönen yanıtın yapısını kontrol edin.
-             // Backend login endpoint'i artık başarılı hasta girişinde 'hasta_id'yi döndürüyor.
-             final String? receivedHastaId = responseData['hasta_id'];
+            // Backend'den dönen yanıtın yapısını kontrol edin.
+            // Backend login endpoint'i artık başarılı hasta girişinde 'hasta_id'yi döndürüyor.
+            final String? receivedHastaId = responseData['hasta_id'];
 
-             if (receivedHastaId != null) {
-               final prefs = await SharedPreferences.getInstance();
-               await prefs.setString('hasta_id', receivedHastaId); // Hasta ID'sini 'hasta_id' anahtarıyla kaydedin
-               print('Hasta ID SharedPreferences\'a kaydedildi: $receivedHastaId');
-             } else {
-               print('Login başarılı ama backend hasta ID\'si döndürmedi.');
-               // Kullanıcıya bilgi verilebilir veya bir hata loglanabilir.
-             }
+            if (receivedHastaId != null) {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('hasta_id', receivedHastaId); // Hasta ID'sini 'hasta_id' anahtarıyla kaydedin
+              print('Hasta ID SharedPreferences\'a kaydedildi: $receivedHastaId');
+            } else {
+              print('Login başarılı ama backend hasta ID\'si döndürmedi.');
+              // Kullanıcıya bilgi verilebilir veya bir hata loglanabilir.
+            }
           }
+
+          if (!mounted) return; // Widget dispose edilmişse işlemi sonlandır
 
           // Sekme durumuna göre yönlendirme
           switch (_tabController.index) {
@@ -128,6 +132,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           );
         }
       } catch (e) {
+        if (!mounted) return; // Widget dispose edilmişse işlemi sonlandır
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Bağlantı hatası: ${e.toString()}'),

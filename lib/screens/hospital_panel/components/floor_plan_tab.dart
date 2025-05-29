@@ -11,37 +11,11 @@ class FloorPlanTab extends StatefulWidget {
 }
 
 class _FloorPlanTabState extends State<FloorPlanTab> {
-  // Örnek olarak kat planları listesi
-  final List<Map<String, dynamic>> _floorPlans = [
-    {
-      'name': 'Zemin Kat',
-      'description': 'Acil servis, karşılama ve kayıt işlemleri',
-      'lastUpdated': '15 Ağustos 2024',
-      'image': 'assets/floor_plans/floor1.png',
-      'isActive': true
-    },
-    {
-      'name': '1. Kat',
-      'description': 'Genel poliklinikler, dahiliye, pediatri',
-      'lastUpdated': '12 Ağustos 2024',
-      'image': 'assets/floor_plans/floor2.png',
-      'isActive': true
-    },
-    {
-      'name': '2. Kat',
-      'description': 'Cerrahi bölümler, ameliyathaneler',
-      'lastUpdated': '10 Ağustos 2024',
-      'image': 'assets/floor_plans/floor3.png',
-      'isActive': true
-    },
-    {
-      'name': '3. Kat',
-      'description': 'Yoğun bakım, özel odalar',
-      'lastUpdated': '5 Ağustos 2024',
-      'image': 'assets/floor_plans/floor4.png',
-      'isActive': false
-    },
-  ];
+  // TODO: Backend'den kat planı verilerini çek
+  final List<Map<String, dynamic>> _floorPlans = [];
+
+  String? _selectedFloor;
+  Map<String, dynamic>? _currentFloorPlan;
 
   int _selectedFloorIndex = 0;
 

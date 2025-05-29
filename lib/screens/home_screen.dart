@@ -25,9 +25,11 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Randevu> randevuList = [];
   bool isLoading = false;
   String? error;
-  bool _isBookingFormVisible = false; // Yeni randevu formu görünürlüğü
+  bool _isBookingFormVisible = false;
+  bool _isLoadingAppointments = false;
+  List<Map<String, dynamic>> _upcomingAppointments = [];
 
-  late final List<Widget> _pages; // pages artık initState'te initialize edilecek
+  late final List<Widget> _pages;
 
   @override
   void initState() {
@@ -35,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _selectedIndex = widget.initialTab > 0 ? widget.initialTab -1 : 0;
 
     _pages = [
-      RandevuPage(onAppointmentBookedSuccessfully: _loadAppointments), // Yeni RandevuPage callback ile
+      RandevuPage(onAppointmentBookedSuccessfully: _loadAppointments),
       HaritaPage(),
       MesajlarPage(),
       ProfilPage(),
@@ -48,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadAppointments() async {
     setState(() {
-      isLoading = true;
+      _isLoadingAppointments = true;
       error = null;
     });
 
@@ -75,7 +77,17 @@ class _HomeScreenState extends State<HomeScreen> {
             date: DateTime.parse(json['randevu_tarihi']),
             time: json['randevu_saati'],
           )).toList();
-          isLoading = false;
+          
+          _upcomingAppointments = appointmentsJson.map((json) => {
+            'id': json['id'],
+            'hasta_id': json['hasta_id'],
+            'department': json['department'],
+            'doctor': json['doctor'],
+            'date': DateTime.parse(json['randevu_tarihi']),
+            'time': json['randevu_saati'],
+          }).toList();
+          
+          _isLoadingAppointments = false;
         });
       } else {
         throw Exception('Randevular yüklenirken bir hata oluştu');
@@ -83,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       setState(() {
         error = e.toString();
-        isLoading = false;
+        _isLoadingAppointments = false;
       });
     }
   }
@@ -132,7 +144,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          _buildUpcomingAppointments(),
           Expanded(
             child: _pages[_selectedIndex],
           ),
@@ -168,113 +179,89 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildUpcomingAppointments() {
-    if (isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (error != null) {
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Text(
-          'Hata: $error',
-          style: const TextStyle(color: Colors.red),
-        ),
-      );
-    }
-
-    if (randevuList.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text(
-          'Yaklaşan randevunuz bulunmamaktadır.',
-          style: TextStyle(fontSize: 16),
-        ),
-      );
-    }
-
-    return Container(
-      height: 200,
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Text(
             'Yaklaşan Randevular',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
+              color: HealthApp.primaryColor,
             ),
           ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: randevuList.length,
-              itemBuilder: (context, index) {
-                final appointment = randevuList[index];
-                return Container(
-                  width: 280,
-                  margin: const EdgeInsets.only(right: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          appointment.department,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: HealthApp.primaryColor,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Dr. ${appointment.doctor}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_today, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${appointment.date.day}/${appointment.date.month}/${appointment.date.year}',
-                            ),
-                            const SizedBox(width: 16),
-                            const Icon(Icons.access_time, size: 16),
-                            const SizedBox(width: 4),
-                            Text(appointment.time),
-                          ],
-                        ),
-                      ],
+        ),
+        _isLoadingAppointments
+            ? Center(child: CircularProgressIndicator())
+            : _upcomingAppointments.isEmpty
+                ? Center(child: Text('Yaklaşan randevunuz bulunmamaktadır.'))
+                : GridView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, // 2 sütun
+                      crossAxisSpacing: 8.0, // Sütunlar arası boşluk
+                      mainAxisSpacing: 8.0, // Satırlar arası boşluk
+                      childAspectRatio: 1.7, // Kartların en boy oranı - 1.0 yerine 1.7 yapıldı
                     ),
+                    itemCount: _upcomingAppointments.length,
+                    itemBuilder: (context, index) {
+                      final appointment = _upcomingAppointments[index];
+                      return _buildAppointmentCard(appointment);
+                    },
                   ),
-                );
-              },
+      ],
+    );
+  }
+
+  Widget _buildAppointmentCard(Map<String, dynamic> appointment) {
+    return Card(
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              appointment['department'],
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: HealthApp.primaryColor,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              'Dr. ${appointment['doctor']}',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  '${appointment['date'].day}/${appointment['date'].month}/${appointment['date'].year}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(appointment['time'],
+                   style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -309,167 +296,10 @@ class _HaritaPageState extends State<HaritaPage> {
     '4. Kat',
   ];
 
-  final List<Map<String, dynamic>> _locations = [
-    {
-      'name': 'Kan Alma Ünitesi',
-      'floor': '2. Kat',
-      'room': '207',
-      'description': 'Kan testleri ve laboratuvar işlemleri',
-      'category': 'Laboratuvar',
-      'icon': Icons.bloodtype,
-    },
-    {
-      'name': 'Radyoloji',
-      'floor': '1. Kat',
-      'room': '105',
-      'description': 'Röntgen, MR ve tomografi işlemleri',
-      'category': 'Görüntüleme',
-      'icon': Icons.medical_services,
-    },
-    {
-      'name': 'Poliklinik',
-      'floor': '3. Kat',
-      'room': '301-310',
-      'description': 'Doktor muayene odaları',
-      'category': 'Muayene',
-      'icon': Icons.local_hospital,
-    },
-    {
-      'name': 'Acil Servis',
-      'floor': 'Zemin Kat',
-      'room': '001',
-      'description': 'Acil durumlar için giriş',
-      'category': 'Acil',
-      'icon': Icons.emergency,
-    },
-    {
-      'name': 'Eczane',
-      'floor': 'Zemin Kat',
-      'room': '002',
-      'description': 'Reçeteli ilaçlar ve medikal ürünler',
-      'category': 'Eczane',
-      'icon': Icons.local_pharmacy,
-    },
-  ];
-
-  final List<Map<String, dynamic>> _patientTasks = [
-    {
-      'id': '1',
-      'name': 'Ödeme İşlemi',
-      'status': 'Beklemede',
-      'priority': 'Yüksek',
-      'location': 'Danışma',
-      'floor': 'Zemin Kat',
-      'room': '003',
-      'instructions': 'Kimliğinizi yanınızda bulundurunuz.',
-      'doctor': 'Danışma',
-      'date': '15 Mart 2024',
-      'time': '09:00',
-      'completed': false,
-      'isBlocking': true,
-      'personnel': {
-        'name': 'Ayşe Yılmaz',
-        'title': 'Danışma Görevlisi',
-        'contact': 'Dahili: 1001',
-        'workingHours': '08:00 - 17:00',
-        'photo': null,
-      },
-    },
-    {
-      'id': '2',
-      'name': 'Kan Tahlili',
-      'status': 'Beklemede',
-      'priority': 'Yüksek',
-      'location': 'Kan Alma Ünitesi',
-      'floor': '2. Kat',
-      'room': '207',
-      'instructions': 'Aç karnına gelmeniz gerekmektedir.',
-      'doctor': 'Dr. Ahmet Yılmaz',
-      'date': '15 Mart 2024',
-      'time': '09:30',
-      'completed': false,
-      'isBlocking': false,
-      'requiredTaskId': '1',
-      'personnel': {
-        'name': 'Mehmet Demir',
-        'title': 'Laboratuvar Teknisyeni',
-        'contact': 'Dahili: 2071',
-        'workingHours': '07:30 - 16:30',
-        'photo': null,
-      },
-    },
-    {
-      'id': '3',
-      'name': 'Röntgen Çekimi',
-      'status': 'Beklemede',
-      'priority': 'Orta',
-      'location': 'Radyoloji',
-      'floor': '1. Kat',
-      'room': '105',
-      'instructions': 'Metal eşya ve takılarınızı çıkarmanız gerekmektedir.',
-      'doctor': 'Dr. Ayşe Kaya',
-      'date': '15 Mart 2024',
-      'time': '10:30',
-      'completed': false,
-      'isBlocking': false,
-      'requiredTaskId': '1',
-      'personnel': {
-        'name': 'Zeynep Kaya',
-        'title': 'Radyoloji Teknisyeni',
-        'contact': 'Dahili: 1051',
-        'workingHours': '08:00 - 16:00',
-        'photo': null,
-      },
-    },
-  ];
-
-  final List<Map<String, dynamic>> _facilities = [
-    {
-      'name': 'WC (Kadın)',
-      'floor': 'Zemin Kat',
-      'room': '004',
-      'description': 'Ana girişin sol tarafında',
-      'category': 'WC',
-      'icon': Icons.wc,
-      'gender': 'Kadın',
-    },
-    {
-      'name': 'WC (Erkek)',
-      'floor': 'Zemin Kat',
-      'room': '005',
-      'description': 'Ana girişin sol tarafında',
-      'category': 'WC',
-      'icon': Icons.wc,
-      'gender': 'Erkek',
-    },
-    {
-      'name': 'WC (Kadın)',
-      'floor': '1. Kat',
-      'room': '106',
-      'description': 'Asansörlerin karşısında',
-      'category': 'WC',
-      'icon': Icons.wc,
-      'gender': 'Kadın',
-    },
-    {
-      'name': 'WC (Erkek)',
-      'floor': '1. Kat',
-      'room': '107',
-      'description': 'Asansörlerin karşısında',
-      'category': 'WC',
-      'icon': Icons.wc,
-      'gender': 'Erkek',
-    },
-    {
-      'name': 'WC (Engelli)',
-      'floor': 'Zemin Kat',
-      'room': '006',
-      'description': 'Ana girişin sağ tarafında',
-      'category': 'WC',
-      'icon': Icons.accessible,
-      'gender': 'Engelli',
-    },
-  ];
+  // TODO: Backend'den çekilecek yer ve tesis bilgileri
+  final List<Map<String, dynamic>> _locations = [];
+  final List<Map<String, dynamic>> _patientTasks = [];
+  final List<Map<String, dynamic>> _facilities = [];
 
   void _searchLocations(String query) {
     if (query.isEmpty) {
@@ -1242,297 +1072,8 @@ class _SemptomPageState extends State<SemptomPage> {
   List<String> selectedSymptoms = [];
   String searchText = '';
 
-  final List<Map<String, dynamic>> allSymptoms = [
-    {
-      'title': 'Ateş',
-      'icon': Icons.thermostat,
-      'description': '38°C ve üzeri ateş',
-      'severity': ['Hafif (37.5-38°C)', 'Orta (38-39°C)', 'Yüksek (39°C+)'],
-      'keywords': ['ateş', 'yüksek ateş', 'vücut ısısı', 'hararet', 'sıcaklık'],
-      'relatedSymptoms': [
-        'Titreme',
-        'Terleme',
-        'Halsizlik',
-        'Üşüme',
-        'Kas Ağrısı'
-      ]
-    },
-    {
-      'title': 'Öksürük',
-      'icon': Icons.healing,
-      'description': 'Kuru veya balgamlı öksürük',
-      'severity': ['Aralıklı', 'Sürekli', 'Şiddetli', 'Gece Artan'],
-      'keywords': [
-        'öksürük',
-        'kuru öksürük',
-        'balgam',
-        'boğaz',
-        'öksürme',
-        'boğulma hissi'
-      ],
-      'relatedSymptoms': [
-        'Boğaz ağrısı',
-        'Nefes darlığı',
-        'Göğüs ağrısı',
-        'Hırıltı'
-      ]
-    },
-    {
-      'title': 'Baş Ağrısı',
-      'icon': Icons.sick,
-      'description': 'Zonklama veya basınç hissi',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Migren'],
-      'keywords': [
-        'baş ağrısı',
-        'migren',
-        'zonklama',
-        'başım ağrıyor',
-        'şiddetli ağrı',
-        'temporal ağrı'
-      ],
-      'relatedSymptoms': [
-        'Baş dönmesi',
-        'Mide bulantısı',
-        'Işığa hassasiyet',
-        'Sese hassasiyet'
-      ]
-    },
-    {
-      'title': 'Yorgunluk',
-      'icon': Icons.battery_alert,
-      'description': 'Genel halsizlik ve bitkinlik',
-      'severity': ['Hafif', 'Belirgin', 'Şiddetli', 'Kronik'],
-      'keywords': [
-        'yorgunluk',
-        'halsizlik',
-        'bitkinlik',
-        'güçsüzlük',
-        'enerji düşüklüğü',
-        'uyku hali'
-      ],
-      'relatedSymptoms': [
-        'Kas ağrısı',
-        'Uyku hali',
-        'Konsantrasyon güçlüğü',
-        'İştahsızlık'
-      ]
-    },
-    {
-      'title': 'Mide Bulantısı',
-      'icon': Icons.sick_outlined,
-      'description': 'Bulantı ve kusma hissi',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Sürekli'],
-      'keywords': [
-        'mide bulantısı',
-        'kusma',
-        'bulantı',
-        'mide rahatsızlığı',
-        'hazımsızlık'
-      ],
-      'relatedSymptoms': [
-        'Karın ağrısı',
-        'İştahsızlık',
-        'Baş dönmesi',
-        'Terleme'
-      ]
-    },
-    {
-      'title': 'Nefes Darlığı',
-      'icon': Icons.air,
-      'description': 'Solunum güçlüğü ve nefes alma zorluğu',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Acil'],
-      'keywords': [
-        'nefes darlığı',
-        'solunum güçlüğü',
-        'nefes alamama',
-        'göğüs sıkışması',
-        'boğulma hissi'
-      ],
-      'relatedSymptoms': ['Öksürük', 'Göğüs ağrısı', 'Hırıltı', 'Baş dönmesi']
-    },
-    {
-      'title': 'Göğüs Ağrısı',
-      'icon': Icons.favorite,
-      'description': 'Göğüs bölgesinde ağrı veya rahatsızlık',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Acil'],
-      'keywords': [
-        'göğüs ağrısı',
-        'kalp ağrısı',
-        'göğüs sıkışması',
-        'yanma hissi',
-        'basınç hissi'
-      ],
-      'relatedSymptoms': [
-        'Nefes darlığı',
-        'Terleme',
-        'Baş dönmesi',
-        'Mide bulantısı'
-      ]
-    },
-    {
-      'title': 'Karın Ağrısı',
-      'icon': Icons.sick_outlined,
-      'description': 'Karın bölgesinde ağrı veya rahatsızlık',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Kronik'],
-      'keywords': ['karın ağrısı', 'mide ağrısı', 'kramp', 'şişkinlik', 'gaz'],
-      'relatedSymptoms': ['Mide bulantısı', 'İshal', 'Kabızlık', 'İştahsızlık']
-    },
-    {
-      'title': 'İshal',
-      'icon': Icons.sick_outlined,
-      'description': 'Sık ve sulu dışkı',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Kronik'],
-      'keywords': [
-        'ishal',
-        'sulu dışkı',
-        'sık tuvalet',
-        'bağırsak rahatsızlığı'
-      ],
-      'relatedSymptoms': [
-        'Karın ağrısı',
-        'Mide bulantısı',
-        'Halsizlik',
-        'Susuzluk'
-      ]
-    },
-    {
-      'title': 'Kabızlık',
-      'icon': Icons.sick_outlined,
-      'description': 'Seyrek ve zor dışkılama',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Kronik'],
-      'keywords': [
-        'kabızlık',
-        'dışkı yapamama',
-        'bağırsak tembelliği',
-        'şişkinlik'
-      ],
-      'relatedSymptoms': ['Karın ağrısı', 'Şişkinlik', 'Gaz', 'İştahsızlık']
-    },
-    {
-      'title': 'Eklem Ağrısı',
-      'icon': Icons.sick_outlined,
-      'description': 'Eklemlerde ağrı ve hareket kısıtlılığı',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Kronik'],
-      'keywords': [
-        'eklem ağrısı',
-        'romatizma',
-        'kireçlenme',
-        'hareket kısıtlılığı'
-      ],
-      'relatedSymptoms': [
-        'Şişlik',
-        'Kızarıklık',
-        'Hareket zorluğu',
-        'Sabah tutukluğu'
-      ]
-    },
-    {
-      'title': 'Kas Ağrısı',
-      'icon': Icons.sick_outlined,
-      'description': 'Kaslarda ağrı ve gerginlik',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Kronik'],
-      'keywords': ['kas ağrısı', 'kas tutulması', 'gerginlik', 'spazm'],
-      'relatedSymptoms': ['Yorgunluk', 'Hareket zorluğu', 'Kramp', 'Titreme']
-    },
-    {
-      'title': 'Baş Dönmesi',
-      'icon': Icons.sick_outlined,
-      'description': 'Denge kaybı ve sersemlik hissi',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Sürekli'],
-      'keywords': ['baş dönmesi', 'sersemlik', 'dengesizlik', 'vertigo'],
-      'relatedSymptoms': [
-        'Mide bulantısı',
-        'Terleme',
-        'Görme bulanıklığı',
-        'Kulak çınlaması'
-      ]
-    },
-    {
-      'title': 'Uyku Bozukluğu',
-      'icon': Icons.bedtime,
-      'description': 'Uykuya dalmada güçlük veya kalitesiz uyku',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Kronik'],
-      'keywords': ['uykusuzluk', 'uyku bozukluğu', 'uyuyamama', 'erken uyanma'],
-      'relatedSymptoms': [
-        'Yorgunluk',
-        'Sinirlilik',
-        'Konsantrasyon güçlüğü',
-        'Baş ağrısı'
-      ]
-    },
-    {
-      'title': 'Cilt Döküntüsü',
-      'icon': Icons.sick_outlined,
-      'description': 'Ciltte kızarıklık, kaşıntı veya döküntü',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Yaygın'],
-      'keywords': ['döküntü', 'kaşıntı', 'kızarıklık', 'kurdeşen', 'egzama'],
-      'relatedSymptoms': ['Kaşıntı', 'Yanma', 'Şişlik', 'Ağrı']
-    },
-    {
-      'title': 'Göz Problemleri',
-      'icon': Icons.remove_red_eye,
-      'description': 'Görme bozukluğu veya göz rahatsızlığı',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Acil'],
-      'keywords': [
-        'göz ağrısı',
-        'görme bulanıklığı',
-        'kızarıklık',
-        'kaşıntı',
-        'yanma'
-      ],
-      'relatedSymptoms': [
-        'Baş ağrısı',
-        'Işığa hassasiyet',
-        'Göz yaşarması',
-        'Göz kapağı şişmesi'
-      ]
-    },
-    {
-      'title': 'Kulak Ağrısı',
-      'icon': Icons.hearing,
-      'description': 'Kulakta ağrı veya rahatsızlık',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Acil'],
-      'keywords': [
-        'kulak ağrısı',
-        'kulak tıkanıklığı',
-        'çınlama',
-        'işitme kaybı'
-      ],
-      'relatedSymptoms': ['Baş ağrısı', 'Baş dönmesi', 'Ateş', 'İşitme azlığı']
-    },
-    {
-      'title': 'Burun Tıkanıklığı',
-      'icon': Icons.sick_outlined,
-      'description': 'Burun solunumunda güçlük',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Kronik'],
-      'keywords': [
-        'burun tıkanıklığı',
-        'nezle',
-        'sinüzit',
-        'akıntı',
-        'hapşırma'
-      ],
-      'relatedSymptoms': [
-        'Baş ağrısı',
-        'Boğaz ağrısı',
-        'Öksürük',
-        'Koku alamama'
-      ]
-    },
-    {
-      'title': 'Boğaz Ağrısı',
-      'icon': Icons.sick_outlined,
-      'description': 'Boğazda ağrı ve rahatsızlık',
-      'severity': ['Hafif', 'Orta', 'Şiddetli', 'Kronik'],
-      'keywords': ['boğaz ağrısı', 'yutkunma zorluğu', 'yanma', 'kaşıntı'],
-      'relatedSymptoms': [
-        'Öksürük',
-        'Burun tıkanıklığı',
-        'Ateş',
-        'Ses kısıklığı'
-      ]
-    }
-  ];
+  // TODO: Backend'den semptom verilerini çek
+  final List<Map<String, dynamic>> allSymptoms = [];
 
   List<Map<String, dynamic>> get filteredSymptoms {
     if (searchText.isEmpty) return allSymptoms;
@@ -3372,17 +2913,79 @@ class RandevuPage extends StatefulWidget {
 }
 
 class _RandevuPageState extends State<RandevuPage> {
-  bool _isBookingFormVisible = false; // Formun görünürlüğünü kontrol eden state
+  List<Randevu> randevuList = [];
+  bool isLoading = false;
+  String? error;
+  bool _isLoadingAppointments = false;
+  List<Map<String, dynamic>> _upcomingAppointments = [];
+  final GlobalKey<RandevuAyarlamaModalState> _bookingFormKey = GlobalKey();
 
-  // Randevu başarıyla kaydedildiğinde formu gizlemek için callback
-  void _onAppointmentBooked(Randevu appointment) {
+  @override
+  void initState() {
+    super.initState();
+    _loadAppointments(); // Sayfa yüklendiğinde randevuları çek
+  }
+
+  // Randevu listesini veritabanından çeken fonksiyon
+  Future<void> _loadAppointments() async {
     setState(() {
-      _isBookingFormVisible = false;
+      _isLoadingAppointments = true;
+      error = null;
     });
-    // Randevu başarıyla eklendiğinde üst widget'a (HomeScreen) haber ver
-    if (widget.onAppointmentBookedSuccessfully != null) {
-      widget.onAppointmentBookedSuccessfully!();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hastaId = prefs.getString('hasta_id');
+      
+      if (hastaId == null) {
+        throw Exception('Kullanıcı ID bulunamadı');
+      }
+
+      final response = await http.get(
+        Uri.parse('http://localhost:8000/get-appointments/$hastaId'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> appointmentsJson = json.decode(response.body);
+        setState(() {
+          randevuList = appointmentsJson.map((json) => Randevu(
+            id: json['id'],
+            hastaId: json['hasta_id'],
+            department: json['department'],
+            doctor: json['doctor'],
+            date: DateTime.parse(json['randevu_tarihi']),
+            time: json['randevu_saati'],
+          )).toList();
+          
+          _upcomingAppointments = appointmentsJson.map((json) => {
+            'id': json['id'],
+            'hasta_id': json['hasta_id'],
+            'department': json['department'],
+            'doctor': json['doctor'],
+            'date': DateTime.parse(json['randevu_tarihi']),
+            'time': json['randevu_saati'],
+          }).toList();
+          
+          _isLoadingAppointments = false;
+        });
+      } else {
+        throw Exception('Randevular yüklenirken bir hata oluştu');
+      }
+    } catch (e) {
+      setState(() {
+        error = e.toString();
+        _isLoadingAppointments = false;
+      });
     }
+  }
+
+  // Randevu başarıyla kaydedildiğinde çalışacak callback
+  void _onAppointmentBookedSuccess(Randevu appointment) {
+    // Randevu listesini yeniden yükle
+    _loadAppointments();
+    // Form alanlarını temizle (RandevuAyarlamaModalState üzerinden erişim gerekli)
+    _bookingFormKey.currentState?.resetForm(); // RandevuAyarlamaModalState'e resetForm metodu eklememiz gerekecek
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Randevu başarıyla oluşturuldu!'),
@@ -3391,20 +2994,104 @@ class _RandevuPageState extends State<RandevuPage> {
     );
   }
 
+  // Yaklaşan Randevular widget'ı
+  Widget _buildUpcomingAppointments() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Text(
+            'Yaklaşan Randevular',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: HealthApp.primaryColor,
+            ),
+          ),
+        ),
+        _isLoadingAppointments
+            ? Center(child: CircularProgressIndicator())
+            : _upcomingAppointments.isEmpty
+                ? Center(child: Text('Yaklaşan randevunuz bulunmamaktadır.'))
+                : GridView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, // 2 sütun
+                      crossAxisSpacing: 8.0, // Sütunlar arası boşluk
+                      mainAxisSpacing: 8.0, // Satırlar arası boşluk
+                      childAspectRatio: 1.7, // Kartların en boy oranı - 1.0 yerine 1.7 yapıldı
+                    ),
+                    itemCount: _upcomingAppointments.length,
+                    itemBuilder: (context, index) {
+                      final appointment = _upcomingAppointments[index];
+                      return _buildAppointmentCard(appointment);
+                    },
+                  ),
+      ],
+    );
+  }
+
+  Widget _buildAppointmentCard(Map<String, dynamic> appointment) {
+    return Card(
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              appointment['department'],
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: HealthApp.primaryColor,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Dr. ${appointment['doctor']}',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  '${appointment['date'].day}/${appointment['date'].month}/${appointment['date'].year}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(appointment['time'],
+                   style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
-      child: _isBookingFormVisible
-          ? RandevuAyarlamaModal( // Formu doğrudan göster
-              onAppointmentBooked: _onAppointmentBooked, // Callback'i ata
-            )
-          : Column( // Form gizliyse mevcut içeriği göster
+      child: Column( // Form ve liste yan yana değil, alt alta olacak
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Randevularım',
+                 Text(
+                  'Randevu Bilgileri', // Yeni başlık
                   style: GoogleFonts.poppins(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -3412,30 +3099,13 @@ class _RandevuPageState extends State<RandevuPage> {
                   ),
                 ),
                 SizedBox(height: 16),
-                ElevatedButton.icon(
-                  icon: Icon(Icons.add),
-                  label: Text('Yeni Randevu'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HealthApp.primaryColor,
-                    minimumSize: Size(double.infinity, 50),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _isBookingFormVisible = true; // Butona basınca formu göster
-                    });
-                  },
+                RandevuAyarlamaModal( // Randevu ayarlama formunu direkt ekliyoruz
+                   key: _bookingFormKey, // Form state'ine erişim için key atıyoruz
+                  onAppointmentBooked: _onAppointmentBookedSuccess, // Baş başarı callback'ini bağlıyoruz
                 ),
                 SizedBox(height: 24),
-                // Text(
-                //   'Yaklaşan Randevular', // Bu başlığı kaldırıyoruz
-                //   style: TextStyle(
-                //     fontSize: 20,
-                //     fontWeight: FontWeight.bold,
-                //     color: HealthApp.primaryColor,
-                //   ),
-                // ),
-                // SizedBox(height: 16), // Ve bu boşluğu da kaldırıyoruz
-                // Randevu listesi buraya gelecek (Şu an HomeScreenState'te)
+                // Yaklaşan Randevular başlığı _buildUpcomingAppointments içinde olacak
+                _buildUpcomingAppointments(),
               ],
             ),
     );
