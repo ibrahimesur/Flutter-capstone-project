@@ -87,21 +87,24 @@ class _SemptomTaramaScreenState extends State<SemptomTaramaScreen> {
     // Başlangıç karşılama mesajını ekle
     _mesajlar.add({
       'isSistem': true,
-      'mesaj':
-          'Merhaba! Lütfen şikayetlerinizi detaylı şekilde anlatın veya yaygın semptomları seçin.'
+      'mesaj': 'Merhaba! Lütfen şikayetlerinizi detaylı şekilde anlatın..'
     });
   }
 
   Future<void> _loadDiseaseDepartmentMapping() async {
     try {
       final csvString = await rootBundle.loadString('assets/gpt.csv');
-      final rows = const CsvToListConverter(fieldDelimiter: ';', eol: '\n').convert(csvString, eol: '\n');
+      final rows = const CsvToListConverter(fieldDelimiter: ';', eol: '\n')
+          .convert(csvString, eol: '\n');
       for (var i = 1; i < rows.length; i++) {
         final row = rows[i];
         if (row.length > 1) {
           final disease = row[0]?.toString()?.toLowerCase()?.trim();
           final department = row[1]?.toString()?.trim();
-          if (disease != null && department != null && disease.isNotEmpty && department.isNotEmpty) {
+          if (disease != null &&
+              department != null &&
+              disease.isNotEmpty &&
+              department.isNotEmpty) {
             diseaseToDepartment[disease] = department;
           }
         }
@@ -191,8 +194,10 @@ class _SemptomTaramaScreenState extends State<SemptomTaramaScreen> {
       });
 
       // Yönlendirme mesajını ekle
-      String normalize(String s) => s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-      String predictedDisease = hastalikTahmini['hastalikAdi']?.toLowerCase()?.trim() ?? '';
+      String normalize(String s) =>
+          s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+      String predictedDisease =
+          hastalikTahmini['hastalikAdi']?.toLowerCase()?.trim() ?? '';
       String predictedDiseaseNorm = normalize(predictedDisease);
       String department = '';
       String? matchedDepartment;
@@ -244,7 +249,8 @@ class _SemptomTaramaScreenState extends State<SemptomTaramaScreen> {
             context: context,
             isScrollControlled: true, // Tam ekran modal için
             builder: (BuildContext context) {
-              return RandevuAyarlamaModal(initialDepartment: mesaj['department']);
+              return RandevuAyarlamaModal(
+                  initialDepartment: mesaj['department']);
             },
           );
         },
@@ -313,133 +319,85 @@ class _SemptomTaramaScreenState extends State<SemptomTaramaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Üst başlık
-          Text(
-            'Semptomlarınızı Anlatın',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Şikayetlerinizi detaylı bir şekilde yazın veya yaygın semptomları seçin',
-            style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
-          ),
-          SizedBox(height: 16),
-          // Ana chat alanı
-          Expanded(
-            child: Column(
-              children: [
-                // Mesajları gösteren kısım
-                Expanded(
-                  child: _mesajlar.isEmpty
-                      ? Center(
-                          child: Text(
-                            'Semptomlarınızı yazın veya yaygın semptomlardan seçin.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        )
-                      : ListView.builder(
-                          controller: _scrollController,
-                          itemCount: _mesajlar.length,
-                          itemBuilder: (context, index) {
-                            final mesaj = _mesajlar[index];
-                            return _buildChatMessage(mesaj);
-                          },
-                        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Semptom Analizi'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              Text(
+                'Semptomlarınızı Anlatın',
+                style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8.0),
+              SizedBox(height: 24.0),
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: _mesajlar.length,
+                  itemBuilder: (context, index) {
+                    final mesaj = _mesajlar[index];
+                    return _buildChatMessage(mesaj);
+                  },
                 ),
-
-                // Semptom giriş kısmı
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _semptomController,
-                            focusNode: _textFocusNode,
-                            decoration: InputDecoration(
-                              hintText: 'Semptomlarınızı yazın...',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 14),
-                            ),
-                            autofocus: false,
-                            textInputAction: TextInputAction.send,
-                            keyboardType: TextInputType.text,
-                            onTap: () {
-                              FocusScope.of(context)
-                                  .requestFocus(_textFocusNode);
-                            },
-                            onFieldSubmitted: (value) {
-                              if (value.trim().isNotEmpty) {
-                                _semptomGonder(value);
-                              }
-                            },
-                          ),
+              ),
+              SizedBox(height: 16.0),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Expanded(
+                    child: TextFormField(
+                      controller: _semptomController,
+                      focusNode: _textFocusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Semptomlarınızı yazın...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25.0),
+                          borderSide: BorderSide.none,
                         ),
-                        IconButton(
-                          icon: Icon(Icons.send, color: Colors.blue),
-                          onPressed: () {
-                            if (_semptomController.text.isNotEmpty) {
-                              _semptomGonder(_semptomController.text);
-                              // Focus'u temizle
-                              FocusScope.of(context).unfocus();
-                            } else if (kIsWeb) {
-                              // Web için giriş dialogunu göster
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text('Semptomlarınızı girin'),
-                                  content: TextField(
-                                    controller: _semptomController,
-                                    decoration: InputDecoration(
-                                      hintText: 'Semptomlarınızı yazın...',
-                                    ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: Text('İptal'),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        if (_semptomController
-                                            .text.isNotEmpty) {
-                                          _semptomGonder(
-                                              _semptomController.text);
-                                          Navigator.pop(context);
-                                          // Focus'u temizle
-                                          FocusScope.of(context).unfocus();
-                                        }
-                                      },
-                                      child: Text('Gönder'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ],
+                        filled: true,
+                        fillColor: Colors.grey[200],
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 20.0, vertical: 14.0),
+                      ),
+                      maxLines: null,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.send,
+                      onFieldSubmitted: (value) {
+                        if (_formKey.currentState!.validate()) {
+                          _semptomGonder(_semptomController.text);
+                        }
+                      },
                     ),
                   ),
-                ),
-              ],
-            ),
+                  SizedBox(width: 8.0),
+                  FloatingActionButton(
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            if (_formKey.currentState!.validate()) {
+                              _semptomGonder(_semptomController.text);
+                            }
+                          },
+                    backgroundColor: Theme.of(context).primaryColor,
+                    child: isLoading
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2),
+                          )
+                        : Icon(Icons.send),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
