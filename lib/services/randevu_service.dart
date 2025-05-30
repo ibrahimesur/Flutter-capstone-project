@@ -5,7 +5,7 @@ class RandevuService {
   // Android Emülatörü için: 'http://10.0.2.2:8000'
   // Web veya iOS Simülatörü/Gerçek Cihaz için: 'http://localhost:8000' veya sunucu IP'si
   // Web için geliştirme aşamasında 127.0.0.1:8000 çalışır
-  static const String baseUrl = 'http://127.0.0.1:8000';
+  static const String baseUrl = 'http://localhost:8000';
 
   // Doktorları listelemek için
   Future<List<Map<String, dynamic>>> fetchDoctors() async {

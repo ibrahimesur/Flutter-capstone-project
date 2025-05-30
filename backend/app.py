@@ -311,6 +311,12 @@ def login():
                            'user_type': user_type,
                            'hasta_id': str(user_id_value)
                           }), 200
+                 elif user_type == 'doctor':
+                     return jsonify({
+                          'message':'Giriş başarılı',
+                          'user_type': user_type,
+                          'doctor_id': str(user_id_value)
+                         }), 200
                  else:
                      return jsonify({
                           'message':'Giriş başarılı',
@@ -464,16 +470,24 @@ def list_doctors():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT name, doctor_id, institutional_id, department FROM doctors')
+        
+        # Doktorları ve bölümlerini getir
+        cur.execute('''
+            SELECT d.doctor_id, d.name, d.institutional_id, d.department, d.email
+            FROM doctors d
+            ORDER BY d.name
+        ''')
+        
         doctors = cur.fetchall()
-
+        
         doctor_list = []
         for doc in doctors:
             doctor_list.append({
-                'name': doc[0],
-                'doctor_id': doc[1],
+                'doctor_id': str(doc[0]),  # String'e çevir
+                'name': doc[1],
                 'institutional_id': doc[2],
-                'department': doc[3]
+                'department': doc[3],
+                'email': doc[4]
             })
 
         return jsonify(doctor_list), 200
@@ -870,6 +884,272 @@ def update_profile():
         if 'cur' in locals() and cur is not None:
             cur.close()
         if 'conn' in locals() and conn is not None:
+            conn.close()
+
+@app.route('/doctor-appointments/<doctor_id>/today', methods=['GET'])
+def get_doctor_today_appointments(doctor_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        today = datetime.datetime.now().date()
+        
+        cur.execute('''
+            SELECT 
+                r.id,
+                r.hasta_id,
+                r.doctor_id,
+                r.randevu_tarihi,
+                r.randevu_saati,
+                r.notlar,
+                r.doktor_notlari,
+                sp.ad_soyad as hasta_adi,
+                sp.yas as hasta_yasi,
+                sp.boy,
+                sp.kilo,
+                sp.kan_grubu,
+                sp.kronik_hastaliklar,
+                sp.alerjiler,
+                d.department as bolum
+            FROM randevular r
+            JOIN saglik_profili sp ON r.hasta_id = sp.hasta_id
+            JOIN doctors d ON r.doctor_id = d.doctor_id
+            WHERE r.doctor_id = %s 
+            AND r.randevu_tarihi = %s
+            ORDER BY r.randevu_saati
+        ''', (doctor_id, today))
+        
+        appointments = cur.fetchall()
+        
+        result = []
+        for app in appointments:
+            result.append({
+                'id': app[0],
+                'hasta_id': app[1],
+                'doctor_id': app[2],
+                'randevu_tarihi': app[3].isoformat(),
+                'randevu_saati': app[4].strftime('%H:%M'),
+                'notlar': app[5],
+                'doktor_notlari': app[6],
+                'hasta_adi': app[7],
+                'hasta_yasi': app[8],
+                'boy': app[9],
+                'kilo': app[10],
+                'kan_grubu': app[11],
+                'kronik_hastaliklar': app[12],
+                'alerjiler': app[13],
+                'bolum': app[14]
+            })
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'cur' in locals():
+            cur.close()
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/doctor-appointments/<doctor_id>/future', methods=['GET'])
+def get_doctor_future_appointments(doctor_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        today = datetime.datetime.now().date()
+        
+        cur.execute('''
+            SELECT 
+                r.id,
+                r.hasta_id,
+                r.doctor_id,
+                r.randevu_tarihi,
+                r.randevu_saati,
+                r.notlar,
+                r.doktor_notlari,
+                sp.ad_soyad as hasta_adi,
+                sp.yas as hasta_yasi,
+                sp.boy,
+                sp.kilo,
+                sp.kan_grubu,
+                sp.kronik_hastaliklar,
+                sp.alerjiler,
+                d.department as bolum
+            FROM randevular r
+            JOIN saglik_profili sp ON r.hasta_id = sp.hasta_id
+            JOIN doctors d ON r.doctor_id = d.doctor_id
+            WHERE r.doctor_id = %s 
+            AND r.randevu_tarihi > %s
+            ORDER BY r.randevu_tarihi, r.randevu_saati
+        ''', (doctor_id, today))
+        
+        appointments = cur.fetchall()
+        
+        result = []
+        for app in appointments:
+            result.append({
+                'id': app[0],
+                'hasta_id': app[1],
+                'doctor_id': app[2],
+                'randevu_tarihi': app[3].isoformat(),
+                'randevu_saati': app[4].strftime('%H:%M'),
+                'notlar': app[5],
+                'doktor_notlari': app[6],
+                'hasta_adi': app[7],
+                'hasta_yasi': app[8],
+                'boy': app[9],
+                'kilo': app[10],
+                'kan_grubu': app[11],
+                'kronik_hastaliklar': app[12],
+                'alerjiler': app[13],
+                'bolum': app[14]
+            })
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'cur' in locals():
+            cur.close()
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/doctor-appointments/<doctor_id>/archived', methods=['GET'])
+def get_doctor_archived_appointments(doctor_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        today = datetime.datetime.now().date()
+        
+        cur.execute('''
+            SELECT 
+                r.id,
+                r.hasta_id,
+                r.doctor_id,
+                r.randevu_tarihi,
+                r.randevu_saati,
+                r.notlar,
+                r.doktor_notlari,
+                sp.ad_soyad as hasta_adi,
+                sp.yas as hasta_yasi,
+                sp.boy,
+                sp.kilo,
+                sp.kan_grubu,
+                sp.kronik_hastaliklar,
+                sp.alerjiler,
+                d.department as bolum
+            FROM randevular r
+            JOIN saglik_profili sp ON r.hasta_id = sp.hasta_id
+            JOIN doctors d ON r.doctor_id = d.doctor_id
+            WHERE r.doctor_id = %s 
+            AND r.randevu_tarihi < %s
+            ORDER BY r.randevu_tarihi DESC, r.randevu_saati DESC
+        ''', (doctor_id, today))
+        
+        appointments = cur.fetchall()
+        
+        result = []
+        for app in appointments:
+            result.append({
+                'id': app[0],
+                'hasta_id': app[1],
+                'doctor_id': app[2],
+                'randevu_tarihi': app[3].isoformat(),
+                'randevu_saati': app[4].strftime('%H:%M'),
+                'notlar': app[5],
+                'doktor_notlari': app[6],
+                'hasta_adi': app[7],
+                'hasta_yasi': app[8],
+                'boy': app[9],
+                'kilo': app[10],
+                'kan_grubu': app[11],
+                'kronik_hastaliklar': app[12],
+                'alerjiler': app[13],
+                'bolum': app[14]
+            })
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if 'cur' in locals():
+            cur.close()
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/cancel-appointment/<appointment_id>', methods=['POST'])
+def cancel_appointment(appointment_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Randevuyu bul ve iptal et
+        cur.execute('''
+            UPDATE randevular 
+            SET durum = 'iptal'
+            WHERE id = %s
+            RETURNING doctor_id, randevu_tarihi, randevu_saati
+        ''', (appointment_id,))
+        
+        result = cur.fetchone()
+        if not result:
+            return jsonify({'message': 'Randevu bulunamadı'}), 404
+            
+        doctor_id, randevu_tarihi, randevu_saati = result
+        
+        # Takvim kaydını güncelle
+        cur.execute('''
+            UPDATE doktor_takvimleri 
+            SET durum = 'müsait'
+            WHERE doctor_id = %s 
+            AND tarih = %s 
+            AND saat = %s
+        ''', (doctor_id, randevu_tarihi, randevu_saati))
+        
+        conn.commit()
+        return jsonify({'message': 'Randevu başarıyla iptal edildi'}), 200
+        
+    except Exception as e:
+        conn.rollback()
+        logger.error('Randevu iptal hatası: %s', e, exc_info=True)
+        return jsonify({'message': 'Randevu iptal edilirken hata oluştu', 'error': str(e)}), 500
+    finally:
+        if 'cur' in locals():
+            cur.close()
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/complete-appointment/<appointment_id>', methods=['POST'])
+def complete_appointment(appointment_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Randevuyu tamamlandı olarak işaretle
+        cur.execute('''
+            UPDATE randevular 
+            SET durum = 'tamamlandı'
+            WHERE id = %s
+        ''', (appointment_id,))
+        
+        if cur.rowcount == 0:
+            return jsonify({'message': 'Randevu bulunamadı'}), 404
+            
+        conn.commit()
+        return jsonify({'message': 'Randevu başarıyla tamamlandı'}), 200
+        
+    except Exception as e:
+        conn.rollback()
+        logger.error('Randevu tamamlama hatası: %s', e, exc_info=True)
+        return jsonify({'message': 'Randevu tamamlanırken hata oluştu', 'error': str(e)}), 500
+    finally:
+        if 'cur' in locals():
+            cur.close()
+        if 'conn' in locals():
             conn.close()
 
 if __name__ == '__main__':

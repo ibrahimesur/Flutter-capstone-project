@@ -99,6 +99,17 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               print('Login başarılı ama backend hasta ID\'si döndürmedi.');
               // Kullanıcıya bilgi verilebilir veya bir hata loglanabilir.
             }
+          } else if (userType == 'doctor') {
+            final prefs = await SharedPreferences.getInstance();
+            final String? doctorId = responseData['doctor_id']?.toString();
+            
+            if (doctorId != null) {
+              await prefs.setString('user_id_value', doctorId);
+              print('Doctor ID SharedPreferences\'a kaydedildi: $doctorId');
+            } else {
+              print('Login başarılı ama backend doctor_id döndürmedi.');
+              print('Backend yanıtı: $responseData');
+            }
           }
 
           if (!mounted) return; // Widget dispose edilmişse işlemi sonlandır

@@ -275,6 +275,109 @@ class _HomeScreenState extends State<HomeScreen> {
       _isBookingFormVisible = !_isBookingFormVisible;
     });
   }
+
+  Future<void> _handleLogin(String identifier, String password, String userType) async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+
+    try {
+      print('DEBUG: Giriş isteği gönderiliyor...'); // Debug için istek bilgisi
+      print('DEBUG: Kullanıcı tipi: $userType'); // Debug için kullanıcı tipi
+      
+      final response = await http.post(
+        Uri.parse('http://localhost:8000/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'identifier': identifier,
+          'password': password,
+          'user_type': userType,
+        }),
+      );
+
+      print('DEBUG: Sunucu yanıt kodu: ${response.statusCode}'); // Debug için yanıt kodu
+      print('DEBUG: Sunucu yanıtı: ${response.body}'); // Debug için ham yanıt
+
+      final data = json.decode(response.body);
+      print('DEBUG: Çözümlenmiş yanıt: $data'); // Debug için çözümlenmiş yanıt
+      print('DEBUG: Yanıt içeriği: ${data.toString()}');
+      print('DEBUG: Yanıt anahtarları: ${data.keys.toList()}');
+
+      if (response.statusCode == 200) {
+        final prefs = await SharedPreferences.getInstance();
+        
+        if (userType == 'patient') {
+          await prefs.setString('hasta_id', data['hasta_id'].toString());
+          await prefs.setString('user_type', 'patient');
+        } else if (userType == 'doctor') {
+          print('DEBUG: Doktor girişi işleniyor...');
+          print('DEBUG: Institutional ID değeri: ${data['institutional_id']}');
+          print('DEBUG: Institutional ID tipi: ${data['institutional_id']?.runtimeType}');
+          
+          if (data['institutional_id'] != null) {
+            final institutionalId = data['institutional_id'].toString();
+            print('DEBUG: Dönüştürülmüş Institutional ID: $institutionalId');
+            
+            print('DEBUG: Institutional ID kaydediliyor...');
+            final success = await prefs.setString('institutional_id', institutionalId);
+            print('DEBUG: Institutional ID kaydetme başarılı mı: $success');
+            
+            await prefs.setString('user_type', 'doctor');
+            
+            // Kaydedilen değeri kontrol et
+            final savedInstitutionalId = prefs.getString('institutional_id');
+            print('DEBUG: Kaydedilen Institutional ID: $savedInstitutionalId');
+            
+            if (savedInstitutionalId == null || savedInstitutionalId.isEmpty) {
+              throw Exception('Institutional ID kaydedilemedi. Kaydedilen değer: $savedInstitutionalId');
+            }
+          } else {
+            print('DEBUG: Sunucu yanıtında institutional_id bulunamadı');
+            print('DEBUG: Tüm yanıt verisi: $data');
+            throw Exception('Sunucudan geçerli bir Institutional ID alınamadı. Yanıt: $data');
+          }
+        } else if (userType == 'hospital_admin') {
+          await prefs.setString('admin_id', data['admin_id'].toString());
+          await prefs.setString('user_type', 'hospital_admin');
+        }
+
+        if (mounted) {
+          if (userType == 'doctor') {
+            print('DEBUG: Doktor paneline yönlendiriliyor...'); // Debug için yönlendirme
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const DoctorPanelScreen()),
+            );
+          } else if (userType == 'hospital_admin') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HospitalPanelScreen()),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          }
+        }
+      } else {
+        print('DEBUG: Sunucu hatası: ${data['message']}'); // Debug için sunucu hatası
+        setState(() {
+          error = data['message'];
+        });
+      }
+    } catch (e) {
+      print('DEBUG: Giriş hatası: $e'); // Debug için hata
+      setState(() {
+        error = 'Giriş yapılırken bir hata oluştu: $e';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 }
 
 class HaritaPage extends StatefulWidget {

@@ -34,17 +34,15 @@ CREATE TABLE hospital_admins (
 );
 
 CREATE TABLE randevular (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Randevular için benzersiz UUID
-    hasta_id UUID NOT NULL, -- users tablosundaki kullanıcının (hastanın) ID'si
-    doctor_id SERIAL NOT NULL, -- doctors tablosundaki doktorun ID'si
+    id SERIAL PRIMARY KEY,
+    hasta_id INTEGER REFERENCES users(id),
+    doctor_id INTEGER REFERENCES doctors(doctor_id),
     randevu_tarihi DATE NOT NULL,
     randevu_saati TIME NOT NULL,
-    olusturma_tarihi TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    guncelleme_tarihi TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     notlar TEXT,
-    doktor_notlari TEXT (Doktor tarafından eklenen notlar),
-    FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE, -- users tablosuna foreign key bağlantısı
-    FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id) ON DELETE CASCADE -- doctors tablosuna foreign key bağlantısı
+    doktor_notlari TEXT,
+    durum VARCHAR(20) DEFAULT 'beklemede' CHECK (durum IN ('beklemede', 'tamamlandı', 'iptal')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE saglik_profili (

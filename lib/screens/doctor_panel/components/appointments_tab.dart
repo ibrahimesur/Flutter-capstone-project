@@ -2,6 +2,85 @@ import 'package:flutter/material.dart';
 import '../../../main.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'dart:collection';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class Appointment {
+  final String id;
+  final String patientName;
+  final String patientAge;
+  final String department;
+  final String date;
+  final String time;
+  final String? notes;
+  final String? doctorNotes;
+  final String? boy;
+  final String? kilo;
+  final String? kanGrubu;
+  final String? kronikHastaliklar;
+  final String? alerjiler;
+  final bool completed;
+  final bool canceled;
+
+  Appointment({
+    required this.id,
+    required this.patientName,
+    required this.patientAge,
+    required this.department,
+    required this.date,
+    required this.time,
+    this.notes,
+    this.doctorNotes,
+    this.boy,
+    this.kilo,
+    this.kanGrubu,
+    this.kronikHastaliklar,
+    this.alerjiler,
+    this.completed = false,
+    this.canceled = false,
+  });
+
+  factory Appointment.fromJson(Map<String, dynamic> json) {
+    return Appointment(
+      id: json['id']?.toString() ?? '',
+      patientName: json['hasta_adi']?.toString() ?? 'İsimsiz Hasta',
+      patientAge: json['hasta_yasi']?.toString() ?? '0',
+      department: json['bolum']?.toString() ?? 'Belirtilmemiş',
+      date: json['randevu_tarihi']?.toString() ?? '',
+      time: json['randevu_saati']?.toString() ?? '',
+      notes: json['notlar']?.toString() ?? '',
+      doctorNotes: json['doktor_notlari']?.toString() ?? '',
+      boy: json['boy']?.toString(),
+      kilo: json['kilo']?.toString(),
+      kanGrubu: json['kan_grubu']?.toString(),
+      kronikHastaliklar: json['kronik_hastaliklar']?.toString(),
+      alerjiler: json['alerjiler']?.toString(),
+      completed: json['completed'] ?? false,
+      canceled: json['canceled'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'hasta_adi': patientName,
+      'hasta_yasi': patientAge,
+      'bolum': department,
+      'randevu_tarihi': date,
+      'randevu_saati': time,
+      'notlar': notes,
+      'doktor_notlari': doctorNotes,
+      'boy': boy,
+      'kilo': kilo,
+      'kan_grubu': kanGrubu,
+      'kronik_hastaliklar': kronikHastaliklar,
+      'alerjiler': alerjiler,
+      'completed': completed,
+      'canceled': canceled,
+    };
+  }
+}
 
 class AppointmentsTab extends StatefulWidget {
   const AppointmentsTab({super.key});
@@ -37,6 +116,8 @@ class _AppointmentsTabState extends State<AppointmentsTab>
   DateTime? _selectedDay;
   bool _showCalendarView = false;
   bool _showDailyView = false;
+  bool _isLoading = false;
+  String? _error;
 
   // Takvim için etkinlikler haritası
   late final ValueNotifier<List<Map<String, dynamic>>> _selectedEvents;
@@ -45,291 +126,145 @@ class _AppointmentsTabState extends State<AppointmentsTab>
   // Bugünün tarihi
   final DateTime _today = DateTime.now();
 
-  // Örnek veriler - bugünkü randevular
-  late final List<Map<String, dynamic>> _todayAppointments = [
-    {
-      'patientName': 'Ahmet Yılmaz',
-      'patientAge': 45,
-      'time': '09:30',
-      'date': '${_today.day} ${getMonthName(_today.month)} ${_today.year}',
-      'type': 'Kontrol',
-      'status': 'Onaylandı',
-      'notes': 'Kan tahlil sonuçları kontrolü',
-      'avatar': 'AY',
-      'department': 'Kardiyoloji',
-      'reason': 'Rutin kontrol',
-      'completed': false,
-      'canceled': false,
-      'dateTime': DateTime(_today.year, _today.month, _today.day, 9, 30),
-    },
-    {
-      'patientName': 'Ayşe Kaya',
-      'patientAge': 32,
-      'time': '10:15',
-      'date': '${_today.day} ${getMonthName(_today.month)} ${_today.year}',
-      'type': 'İlk Muayene',
-      'status': 'Beklemede',
-      'notes': 'Baş ağrısı şikayeti',
-      'avatar': 'AK',
-      'department': 'Kardiyoloji',
-      'reason': 'Baş ağrısı şikayeti',
-      'completed': false,
-      'canceled': false,
-      'dateTime': DateTime(_today.year, _today.month, _today.day, 10, 15),
-    },
-    {
-      'patientName': 'Mehmet Demir',
-      'patientAge': 58,
-      'time': '11:30',
-      'date': '${_today.day} ${getMonthName(_today.month)} ${_today.year}',
-      'type': 'Acil',
-      'status': 'Onaylandı',
-      'notes': 'Göğüs ağrısı ve tansiyon kontrolü',
-      'avatar': 'MD',
-      'department': 'Kardiyoloji',
-      'reason': 'Göğüs ağrısı',
-      'completed': true,
-      'canceled': false,
-      'dateTime': DateTime(_today.year, _today.month, _today.day, 11, 30),
-    },
-  ];
-
-  // Gelecekteki randevular için tarihleri önceden hesapla
-  final DateTime _dayPlus2 = DateTime.now().add(const Duration(days: 2));
-  final DateTime _dayPlus3 = DateTime.now().add(const Duration(days: 3));
-  final DateTime _dayPlus5 = DateTime.now().add(const Duration(days: 5));
-  final DateTime _dayMinus1 = DateTime.now().subtract(const Duration(days: 1));
-  final DateTime _dayMinus2 = DateTime.now().subtract(const Duration(days: 2));
-
-  // Örnek veriler - gelecek randevular
-  late final List<Map<String, dynamic>> _futureAppointments = [
-    {
-      'patientName': 'Zeynep Yıldız',
-      'patientAge': 28,
-      'time': '14:00',
-      'date':
-          '${_dayPlus2.day} ${getMonthName(_dayPlus2.month)} ${_dayPlus2.year}',
-      'type': 'Kontrol',
-      'status': 'Onaylandı',
-      'notes': 'İlaç sonrası değerlendirme',
-      'avatar': 'ZY',
-      'department': 'Kardiyoloji',
-      'reason': 'İlaç değerlendirmesi',
-      'completed': false,
-      'canceled': false,
-      'dateTime':
-          DateTime(_dayPlus2.year, _dayPlus2.month, _dayPlus2.day, 14, 0),
-    },
-    {
-      'patientName': 'Ali Öztürk',
-      'patientAge': 41,
-      'time': '15:30',
-      'date':
-          '${_dayPlus3.day} ${getMonthName(_dayPlus3.month)} ${_dayPlus3.year}',
-      'type': 'İlk Muayene',
-      'status': 'Beklemede',
-      'notes': 'Sırt ağrısı şikayeti',
-      'avatar': 'AÖ',
-      'department': 'Kardiyoloji',
-      'reason': 'Sırt ağrısı',
-      'completed': false,
-      'canceled': true,
-      'dateTime':
-          DateTime(_dayPlus3.year, _dayPlus3.month, _dayPlus3.day, 15, 30),
-    },
-    {
-      'patientName': 'Hakan Aydın',
-      'patientAge': 52,
-      'time': '09:00',
-      'date':
-          '${_dayPlus5.day} ${getMonthName(_dayPlus5.month)} ${_dayPlus5.year}',
-      'type': 'Takip',
-      'status': 'Onaylandı',
-      'notes': 'Kalp ritim bozukluğu takibi',
-      'avatar': 'HA',
-      'department': 'Kardiyoloji',
-      'reason': 'Ritim bozukluğu takibi',
-      'completed': false,
-      'canceled': false,
-      'dateTime':
-          DateTime(_dayPlus5.year, _dayPlus5.month, _dayPlus5.day, 9, 0),
-    },
-    {
-      'patientName': 'Fatma Şen',
-      'patientAge': 65,
-      'time': '11:15',
-      'date':
-          '${_dayMinus2.day} ${getMonthName(_dayMinus2.month)} ${_dayMinus2.year}',
-      'type': 'Kontrol',
-      'status': 'Tamamlandı',
-      'notes': 'Düzenli kontrol muayenesi',
-      'avatar': 'FŞ',
-      'department': 'Kardiyoloji',
-      'reason': 'Düzenli kontrol',
-      'completed': true,
-      'canceled': false,
-      'dateTime':
-          DateTime(_dayMinus2.year, _dayMinus2.month, _dayMinus2.day, 11, 15),
-    },
-    {
-      'patientName': 'Kemal Yılmaz',
-      'patientAge': 48,
-      'time': '16:00',
-      'date':
-          '${_dayMinus1.day} ${getMonthName(_dayMinus1.month)} ${_dayMinus1.year}',
-      'type': 'Acil',
-      'status': 'İptal',
-      'notes': 'Hasta gelmedi',
-      'avatar': 'KY',
-      'department': 'Kardiyoloji',
-      'reason': 'Kalp çarpıntısı',
-      'completed': false,
-      'canceled': true,
-      'dateTime':
-          DateTime(_dayMinus1.year, _dayMinus1.month, _dayMinus1.day, 16, 0),
-    },
-  ];
-
-  // Örnek veriler - geçmiş randevular arşivi
-  final List<Map<String, dynamic>> _archivedAppointments = [
-    {
-      'patientName': 'Hüseyin Kara',
-      'patientAge': 37,
-      'time': '13:45',
-      'date': '5 Mayıs 2024',
-      'type': 'Kontrol',
-      'status': 'Tamamlandı',
-      'notes': 'Tansiyon değerleri normale dönmüş, ilaç dozunu azaltıyoruz.',
-      'doctorNotes':
-          'Hastaya sağlıklı beslenme ve egzersiz önerildi. 3 ay sonra kontrol.',
-      'avatar': 'HK',
-      'department': 'Kardiyoloji',
-      'reason': 'Tansiyon kontrolü',
-      'completed': true,
-      'canceled': false,
-      'dateTime': DateTime.now().subtract(const Duration(days: 20)),
-    },
-    {
-      'patientName': 'Aylin Yıldırım',
-      'patientAge': 42,
-      'time': '10:30',
-      'date': '12 Nisan 2024',
-      'type': 'Takip',
-      'status': 'Tamamlandı',
-      'notes': 'EKG sonuçları normal, ritim düzenli.',
-      'doctorNotes':
-          'İlaç tedavisine devam, stres faktörlerinin azaltılması önerildi.',
-      'avatar': 'AY',
-      'department': 'Kardiyoloji',
-      'reason': 'Ritim bozukluğu takibi',
-      'completed': true,
-      'canceled': false,
-      'dateTime': DateTime.now().subtract(const Duration(days: 45)),
-    },
-    {
-      'patientName': 'Murat Öztürk',
-      'patientAge': 65,
-      'time': '09:15',
-      'date': '28 Mart 2024',
-      'type': 'Acil',
-      'status': 'Tamamlandı',
-      'notes': 'Göğüs ağrısı şikayetiyle acil başvuru.',
-      'doctorNotes':
-          'Akut MI şüphesi, acil kateter ünitesine sevk edildi. Takipte MI doğrulanmadı.',
-      'avatar': 'MÖ',
-      'department': 'Kardiyoloji',
-      'reason': 'Göğüs ağrısı',
-      'completed': true,
-      'canceled': false,
-      'dateTime': DateTime.now().subtract(const Duration(days: 60)),
-    },
-  ];
-
-  // Tüm randevuları birleştir
-  List<Map<String, dynamic>> get _allAppointments {
-    return [
-      ..._todayAppointments,
-      ..._futureAppointments,
-      ..._archivedAppointments
-    ];
-  }
-
-  // Seçilen güne ait randevuları getir
-  List<Map<String, dynamic>> _getAppointmentsForDay(DateTime day) {
-    return _allAppointments.where((appointment) {
-      final appointmentDate = appointment['dateTime'] as DateTime;
-      return appointmentDate.year == day.year &&
-          appointmentDate.month == day.month &&
-          appointmentDate.day == day.day;
-    }).toList();
-  }
+  // Randevuları tutacak listeler
+  List<Map<String, dynamic>> _todayAppointments = [];
+  List<Map<String, dynamic>> _futureAppointments = [];
+  List<Map<String, dynamic>> _archivedAppointments = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController =
-        TabController(length: 3, vsync: this); // 3 sekme: bugün, gelecek, arşiv
-
-    // Takvimi bugünün tarihine odakla
+    _tabController = TabController(length: 3, vsync: this);
     _focusedDay = DateTime.now();
     _selectedDay = _focusedDay;
-
-    // Debug: Randevu sayılarını kontrol et
-    print('Today appointments: ${_todayAppointments.length}');
-    print('Future appointments: ${_futureAppointments.length}');
-    print('Archived appointments: ${_archivedAppointments.length}');
-    print('All appointments: ${_allAppointments.length}');
-
-    // Randevuları tarihlerine göre ayır
+    _selectedEvents = ValueNotifier([]);
     _loadAppointments();
   }
 
-  void _loadAppointments() {
-    // Etkinlikleri yükle
+  Future<void> _loadAppointments() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id_value');
+      print('DEBUG: Retrieved user_id_value from SharedPreferences: $userId');
+
+      if (userId == null || userId.isEmpty) {
+        print('DEBUG: User ID is null or empty in SharedPreferences');
+        throw Exception('Doktor ID bulunamadı');
+      }
+
+      // Bugünün randevularını getir
+      final todayResponse = await http.get(
+        Uri.parse('http://localhost:8000/doctor-appointments/$userId/today'),
+      );
+      print('DEBUG: Today appointments response: ${todayResponse.body}');
+
+      if (todayResponse.statusCode == 200) {
+        final List<dynamic> todayData = json.decode(todayResponse.body);
+        setState(() {
+          _todayAppointments = todayData.map((json) => Appointment.fromJson(json).toJson()).toList();
+        });
+      } else {
+        throw Exception('Bugünün randevuları yüklenirken hata oluştu');
+      }
+
+      // Gelecek randevuları getir
+      final upcomingResponse = await http.get(
+        Uri.parse('http://localhost:8000/doctor-appointments/$userId/future'),
+      );
+
+      if (upcomingResponse.statusCode == 200) {
+        final List<dynamic> upcomingData = json.decode(upcomingResponse.body);
+        setState(() {
+          _futureAppointments = upcomingData.map((json) => Appointment.fromJson(json).toJson()).toList();
+        });
+      } else {
+        throw Exception('Gelecek randevular yüklenirken hata oluştu');
+      }
+
+      // Arşivlenmiş randevuları getir
+      final archivedResponse = await http.get(
+        Uri.parse('http://localhost:8000/doctor-appointments/$userId/archived'),
+      );
+
+      if (archivedResponse.statusCode == 200) {
+        final List<dynamic> archivedData = json.decode(archivedResponse.body);
+        setState(() {
+          _archivedAppointments = archivedData.map((json) => Appointment.fromJson(json).toJson()).toList();
+        });
+      } else {
+        throw Exception('Arşivlenmiş randevular yüklenirken hata oluştu');
+      }
+
+      _updateCalendarEvents();
+    } catch (e) {
+      print('DEBUG: Randevular yüklenirken hata: $e');
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _updateCalendarEvents() {
     _events = {};
 
-    // Tüm randevuları döngüyle işle
-    for (var appointment in _allAppointments) {
-      final DateTime dateTime = appointment['dateTime'] as DateTime;
-      // Tarihi normalize et (saat, dakika, saniye bilgilerini kaldır)
-      final DateTime date =
-          DateTime(dateTime.year, dateTime.month, dateTime.day);
+    // Tüm randevuları birleştir
+    final allAppointments = [
+      ..._todayAppointments,
+      ..._futureAppointments,
+      ..._archivedAppointments
+    ];
 
-      // Debug: Randevu detaylarını yazdır
-      print('Appointment: ${appointment['patientName']} on ${date.toString()}');
+    // Randevuları tarihlerine göre grupla
+    for (var appointment in allAppointments) {
+      String dateStr = appointment['randevu_tarihi']?.toString() ?? '';
+      String timeStr = appointment['randevu_saati']?.toString() ?? '00:00';
+      DateTime? dateTime;
+      try {
+        final date = DateTime.parse(dateStr);
+        final timeParts = timeStr.split(':');
+        final hour = int.parse(timeParts[0]);
+        final minute = int.parse(timeParts[1]);
+        dateTime = DateTime(date.year, date.month, date.day, hour, minute);
+      } catch (_) {
+        dateTime = null;
+      }
+      if (dateTime == null) continue;
+      final DateTime dateOnly = DateTime(dateTime.year, dateTime.month, dateTime.day);
 
-      if (_events[date] != null) {
-        _events[date]!.add(appointment);
+      // Her randevuya dateTime alanı ekle
+      appointment['dateTime'] = dateTime;
+
+      if (_events[dateOnly] != null) {
+        _events[dateOnly]!.add(appointment);
       } else {
-        _events[date] = [appointment];
+        _events[dateOnly] = [appointment];
       }
     }
 
-    // Debug: Oluşturulan etkinlik sayısını kontrol et
-    print('Event dates count: ${_events.length}');
-    _events.forEach((date, events) {
-      print('Date: $date, Events: ${events.length}');
-    });
-
     // Seçilen gün için etkinlikleri güncelle
     if (_selectedDay != null) {
-      _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
-    } else {
-      _selectedEvents = ValueNotifier([]);
+      _selectedEvents.value = _getEventsForDay(_selectedDay!);
     }
   }
 
   // Belirli bir gün için etkinlikleri al
   List<Map<String, dynamic>> _getEventsForDay(DateTime day) {
-    // Tarihi normalize et
     final DateTime normalizedDay = DateTime(day.year, day.month, day.day);
-
-    // Debug: Belirli gün için etkinlik arama
-    print('Getting events for: $normalizedDay');
-    final events = _events[normalizedDay] ?? [];
-    print('Found ${events.length} events');
-
-    return events;
+    return _events[normalizedDay] ?? [];
   }
 
   @override
@@ -782,24 +717,45 @@ class _AppointmentsTabState extends State<AppointmentsTab>
       );
     }
 
-    // Saatleri sırala (08:00-18:00 arası)
-    final List<String> timeSlots = List.generate(11, (index) {
-      final hour = index + 8;
-      return '${hour.toString().padLeft(2, '0')}:00';
-    });
+    // Saatleri sırala (08:00-18:00 arası, 30'ar dakika aralıklarla)
+    final List<String> timeSlots = [];
+    for (int hour = 8; hour <= 18; hour++) {
+      timeSlots.add('${hour.toString().padLeft(2, '0')}:00');
+      if (hour != 18) {
+        timeSlots.add('${hour.toString().padLeft(2, '0')}:30');
+      }
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: timeSlots.length,
       itemBuilder: (context, index) {
         final timeSlot = timeSlots[index];
-        final hour = int.parse(timeSlot.split(':')[0]);
+        final slotHour = int.parse(timeSlot.split(':')[0]);
+        final slotMinute = int.parse(timeSlot.split(':')[1]);
 
-        // Bu saat dilimindeki randevuları bul
+        // Bu saat dilimindeki randevuları bul (saat ve dakika eşleşmesi)
         final slotEvents = events.where((event) {
-          final eventDateTime = event['dateTime'] as DateTime;
-          return eventDateTime.hour == hour;
+          DateTime? eventDateTime;
+          if (event['dateTime'] is DateTime) {
+            eventDateTime = event['dateTime'];
+          } else if (event['randevu_tarihi'] != null) {
+            eventDateTime = DateTime.tryParse(event['randevu_tarihi'].toString());
+          }
+          if (eventDateTime == null) return false;
+          return eventDateTime.hour == slotHour && eventDateTime.minute == slotMinute;
         }).toList();
+
+        // Slot içindeki randevuları saat sırasına göre sırala
+        slotEvents.sort((a, b) {
+          final aTime = a['dateTime'] is DateTime
+              ? a['dateTime']
+              : DateTime.tryParse(a['randevu_tarihi']?.toString() ?? '') ?? DateTime(1970);
+          final bTime = b['dateTime'] is DateTime
+              ? b['dateTime']
+              : DateTime.tryParse(b['randevu_tarihi']?.toString() ?? '') ?? DateTime(1970);
+          return aTime.compareTo(bTime);
+        });
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -878,8 +834,12 @@ class _AppointmentsTabState extends State<AppointmentsTab>
 
     // Zamanlarına göre sırala
     appointments.sort((a, b) {
-      final DateTime dateTimeA = a['dateTime'] as DateTime;
-      final DateTime dateTimeB = b['dateTime'] as DateTime;
+      final DateTime dateTimeA = a['dateTime'] is DateTime
+          ? a['dateTime']
+          : DateTime.tryParse(a['randevu_tarihi']?.toString() ?? '') ?? DateTime(1970);
+      final DateTime dateTimeB = b['dateTime'] is DateTime
+          ? b['dateTime']
+          : DateTime.tryParse(b['randevu_tarihi']?.toString() ?? '') ?? DateTime(1970);
       return dateTimeA.compareTo(dateTimeB);
     });
 
@@ -948,343 +908,234 @@ class _AppointmentsTabState extends State<AppointmentsTab>
   }
 
   Widget _buildAppointmentCard(Map<String, dynamic> appointment) {
-    final String status = appointment['status']?.toString() ?? 'Beklemede';
-    final bool isCompleted = appointment['completed'] ?? false;
-    final bool isCanceled = appointment['canceled'] ?? false;
-    final String doctorNotes = appointment['doctorNotes']?.toString() ?? '';
+    final DateTime appointmentDate = DateTime.parse(appointment['randevu_tarihi']?.toString() ?? '1970-01-01');
+    final bool isPast = appointmentDate.isBefore(DateTime.now());
+    final bool isToday = appointmentDate.year == DateTime.now().year &&
+        appointmentDate.month == DateTime.now().month &&
+        appointmentDate.day == DateTime.now().day;
 
-    // Duruma göre renk belirleme
-    final Color statusColor = isCompleted
-        ? Colors.green
-        : isCanceled
-            ? Colors.red
-            : HealthApp.primaryColor;
+    Color statusColor;
+    String statusText;
+    if (isPast) {
+      statusColor = Colors.green;
+      statusText = 'Tamamlandı';
+    } else if (isToday) {
+      statusColor = HealthApp.primaryColor;
+      statusText = 'Bugün';
+    } else {
+      statusColor = Colors.orange;
+      statusText = 'Planlandı';
+    }
 
     return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor: statusColor,
-          radius: 24,
-          child: Text(
-            appointment['avatar']?.toString().substring(0, 1) ?? 'X',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        title: Text(
-          appointment['patientName']?.toString() ?? 'İsimsiz Hasta',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        subtitle: Column(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 4),
-            Text('${appointment['patientAge']?.toString() ?? '?'} yaş',
-                style: TextStyle(color: Colors.grey[600])),
-            const SizedBox(height: 4),
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: HealthApp.primaryColor,
+          child: Text(
+                    (appointment['hasta_adi'] ?? '??').toString().substring(0, 2).toUpperCase(),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      appointment['hasta_adi']?.toString() ?? 'İsimsiz Hasta',
+          style: const TextStyle(
+            fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             Text(
-              appointment['dateTime'] != null
-                  ? '${_formatDate(appointment['dateTime'])}, ${_formatTime(appointment['dateTime'])}'
-                  : appointment['date']?.toString() ?? 'Tarih belirtilmemiş',
-              style: const TextStyle(fontWeight: FontWeight.w500),
+                      '${appointment['hasta_yasi']?.toString() ?? '0'} yaş',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
             ),
           ],
         ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(16),
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: statusColor),
           ),
           child: Text(
-            isCompleted
-                ? 'Tamamlandı'
-                : isCanceled
-                    ? 'İptal Edildi'
-                    : status,
+                    statusText,
             style: TextStyle(
               color: statusColor,
+                      fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Sağlık profili bilgileri sadece Column içinde, softWrap ve overflow ile
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildInfoRow(
-                    'Bölüm', appointment['department'] ?? 'Belirtilmemiş'),
-                const SizedBox(height: 8),
-                _buildInfoRow('Tür', appointment['type'] ?? 'Belirtilmemiş'),
-                const SizedBox(height: 8),
-                _buildInfoRow(
-                    'Sebep', appointment['reason'] ?? 'Belirtilmemiş'),
-                const SizedBox(height: 8),
-                _buildInfoRow('Not', appointment['notes'] ?? 'Not yok'),
-                const SizedBox(height: 8),
-                // Doktor notları
-                const Text(
-                  'Doktor Notları:',
+                Text('Boy: ${appointment['boy'] ?? '-'} cm', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                Text('Kilo: ${appointment['kilo'] ?? '-'} kg', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                Text('Kan Grubu: ${appointment['kan_grubu'] ?? '-'}', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                Text('Kronik Hastalıklar: ${appointment['kronik_hastaliklar'] ?? '-'}', style: TextStyle(color: Colors.grey[600], fontSize: 13), softWrap: true, overflow: TextOverflow.visible),
+                Text('Alerjiler: ${appointment['alerjiler'] ?? '-'}', style: TextStyle(color: Colors.grey[600], fontSize: 13), softWrap: true, overflow: TextOverflow.visible),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  appointment['randevu_saati']?.toString() ?? '',
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                InkWell(
-                  onTap: () {
-                    _showDoctorNotesEditor(appointment);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[300]!)),
-                    width: double.infinity,
-                    child: Text(
-                      doctorNotes.isEmpty
-                          ? 'Henüz not eklenmemiş. Eklemek için tıklayın.'
-                          : doctorNotes,
-                      style: TextStyle(
-                        color: doctorNotes.isEmpty
-                            ? Colors.grey[600]
-                            : Colors.black87,
-                        fontStyle: doctorNotes.isEmpty
-                            ? FontStyle.italic
-                            : FontStyle.normal,
-                      ),
-                    ),
+                    color: Colors.grey[600],
+                    fontSize: 14,
                   ),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (!isCompleted && !isCanceled) ...[
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.cancel),
-                        label: const Text('İptal Et'),
-                        onPressed: () {
-                          _showCancelConfirmation(appointment);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.email),
-                        label: const Text('Mesaj'),
-                        onPressed: () {},
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.check),
-                        label: const Text('Tamamlandı'),
-                        onPressed: () {
-                          _showCompleteConfirmation(appointment);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ] else if (isCompleted && !isCanceled) ...[
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.note_add),
-                        label: const Text('Not Ekle'),
-                        onPressed: () {
-                          _showDoctorNotesEditor(appointment);
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.restore),
-                        label: const Text('Yeniden Planla'),
-                        onPressed: () {
-                          _showRescheduleConfirmation(appointment);
-                        },
-                      ),
-                    ] else ...[
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.restore),
-                        label: const Text('Yeniden Planla'),
-                        onPressed: () {
-                          _showRescheduleConfirmation(appointment);
-                        },
-                      ),
-                    ],
-                  ],
+                const SizedBox(width: 16),
+                Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  '${appointmentDate.day} ${getMonthName(appointmentDate.month)} ${appointmentDate.year}',
+                      style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
+            if ((appointment['notlar']?.toString() ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Notlar: ${appointment['notlar']?.toString() ?? ''}',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            if ((appointment['doktor_notlari']?.toString() ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Doktor Notları: ${appointment['doktor_notlari']?.toString() ?? ''}',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (!isPast)
+                  TextButton.icon(
+                        onPressed: () {
+                      _cancelAppointment(appointment['id']?.toString() ?? '');
+                    },
+                    icon: const Icon(Icons.cancel, color: Colors.red),
+                    label: const Text(
+                      'İptal Et',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                if (!isPast)
+                  TextButton.icon(
+                        onPressed: () {
+                      _completeAppointment(appointment['id']?.toString() ?? '');
+                        },
+                    icon: const Icon(Icons.check_circle, color: Colors.green),
+                    label: const Text(
+                      'Tamamla',
+                      style: TextStyle(color: Colors.green),
+                      ),
+                ),
+              ],
           ),
         ],
+        ),
       ),
     );
   }
 
-  String _formatDate(DateTime dateTime) {
-    return '${dateTime.day} ${getMonthName(dateTime.month)} ${dateTime.year}';
-  }
+  Future<void> _cancelAppointment(String appointmentId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://localhost:5000/cancel-appointment/$appointmentId'),
+      );
 
-  String _formatTime(DateTime dateTime) {
-    String hour = dateTime.hour.toString().padLeft(2, '0');
-    String minute = dateTime.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
-
-  void _showCompleteConfirmation(Map<String, dynamic> appointment) {
-    final String patientName =
-        appointment['patientName']?.toString() ?? 'İsimsiz Hasta';
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Randevuyu Tamamla'),
-        content: Text(
-            '$patientName için randevuyu tamamlandı olarak işaretlemek istediğinize emin misiniz?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text('İptal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                appointment['completed'] = true;
-                appointment['status'] = 'Tamamlandı';
-              });
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
+      if (response.statusCode == 200) {
+        // Randevuları yeniden yükle
+        await _loadAppointments();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Randevu iptal edildi'),
               backgroundColor: Colors.green,
-            ),
-            child: const Text('Tamamlandı'),
-          ),
-        ],
       ),
     );
   }
-
-  void _showCancelConfirmation(Map<String, dynamic> appointment) {
-    final String patientName =
-        appointment['patientName']?.toString() ?? 'İsimsiz Hasta';
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Randevuyu İptal Et'),
-        content: Text(
-            '$patientName için randevuyu iptal etmek istediğinize emin misiniz?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text('Vazgeç'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                appointment['canceled'] = true;
-                appointment['status'] = 'İptal';
-              });
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
+      } else {
+        throw Exception('Randevu iptal edilemedi');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Randevu iptal edilirken hata oluştu: $e'),
               backgroundColor: Colors.red,
-            ),
-            child: const Text('İptal Et'),
           ),
-        ],
-      ),
-    );
+        );
+      }
+    }
   }
 
-  void _showRescheduleConfirmation(Map<String, dynamic> appointment) {
-    final String patientName =
-        appointment['patientName']?.toString() ?? 'İsimsiz Hasta';
+  Future<void> _completeAppointment(String appointmentId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://localhost:5000/complete-appointment/$appointmentId'),
+      );
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Randevuyu Yeniden Planla'),
-        content: Text(
-            '$patientName için randevuyu yeniden planlamak istediğinize emin misiniz?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text('İptal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                appointment['completed'] = false;
-                appointment['canceled'] = false;
-                appointment['status'] = 'Beklemede';
-              });
-              Navigator.pop(context);
-
-              // Yeni tarih seçme diyaloğu burada açılabilir
+      if (response.statusCode == 200) {
+        // Randevuları yeniden yükle
+        await _loadAppointments();
+        if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content:
-                      Text('Yeniden planlama özelliği yakında eklenecektir'),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HealthApp.primaryColor,
-            ),
-            child: const Text('Yeniden Planla'),
-          ),
-        ],
+              content: Text('Randevu tamamlandı'),
+              backgroundColor: Colors.green,
       ),
     );
   }
-
-  Widget _buildInfoRow(String label, dynamic value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 80,
-          child: Text(
-            '$label:',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
-            ),
+      } else {
+        throw Exception('Randevu tamamlanamadı');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Randevu tamamlanırken hata oluştu: $e'),
+            backgroundColor: Colors.red,
           ),
-        ),
-        Expanded(
-          child: Text(
-            value?.toString() ?? '-',
-            style: const TextStyle(
-              color: Colors.black87,
-            ),
-          ),
-        ),
-      ],
-    );
+        );
+      }
+    }
   }
 
   Widget _buildMarker(int count, Color color) {
@@ -1297,60 +1148,6 @@ class _AppointmentsTabState extends State<AppointmentsTab>
       ),
       width: 8,
       height: 8,
-    );
-  }
-
-  // Doktor notları düzenleme dialogu
-  void _showDoctorNotesEditor(Map<String, dynamic> appointment) {
-    final TextEditingController notesController = TextEditingController();
-    notesController.text = appointment['doctorNotes']?.toString() ?? '';
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Doktor Notları'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '${appointment['patientName']} - ${_formatDate(appointment['dateTime'])}',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: notesController,
-              decoration: const InputDecoration(
-                hintText: 'Randevu ile ilgili notlarınızı giriniz...',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 5,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text('İptal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                appointment['doctorNotes'] = notesController.text;
-              });
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HealthApp.primaryColor,
-            ),
-            child: const Text('Kaydet'),
-          ),
-        ],
-      ),
     );
   }
 }
