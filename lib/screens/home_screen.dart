@@ -302,7 +302,53 @@ class _HaritaPageState extends State<HaritaPage> {
   // TODO: Backend'den çekilecek yer ve tesis bilgileri
   final List<Map<String, dynamic>> _locations = [];
   final List<Map<String, dynamic>> _patientTasks = [];
-  final List<Map<String, dynamic>> _facilities = [];
+  final List<Map<String, dynamic>> _facilities = [
+    {
+      'name': 'Kadın WC',
+      'category': 'WC',
+      'gender': 'Kadın',
+      'floor': 'Zemin Kat',
+      'room': 'Koridor Sonu',
+      'description': 'Ana koridorun sonunda, danışmanın karşısında',
+      'icon': Icons.wc,
+    },
+    {
+      'name': 'Erkek WC',
+      'category': 'WC',
+      'gender': 'Erkek',
+      'floor': 'Zemin Kat',
+      'room': 'Koridor Başı',
+      'description': 'Ana koridorun başında, asansörlerin yanında',
+      'icon': Icons.wc,
+    },
+    {
+      'name': 'Engelli WC',
+      'category': 'WC',
+      'gender': 'Engelli',
+      'floor': 'Zemin Kat',
+      'room': 'Geniş Koridor',
+      'description': 'Geniş koridorun ortasında',
+      'icon': Icons.accessible,
+    },
+    {
+      'name': 'Kadın WC',
+      'category': 'WC',
+      'gender': 'Kadın',
+      'floor': '1. Kat',
+      'room': 'Oda 105 Karşısı',
+      'description': '105 numaralı odanın karşısında',
+      'icon': Icons.wc,
+    },
+    {
+      'name': 'Erkek WC',
+      'category': 'WC',
+      'gender': 'Erkek',
+      'floor': '1. Kat',
+      'room': 'Oda 110 Yanı',
+      'description': '110 numaralı odanın yanında',
+      'icon': Icons.wc,
+    },
+  ];
 
   void _searchLocations(String query) {
     if (query.isEmpty) {

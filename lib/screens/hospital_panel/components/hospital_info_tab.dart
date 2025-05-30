@@ -10,7 +10,44 @@ class HospitalInfoTab extends StatefulWidget {
 
 class _HospitalInfoTabState extends State<HospitalInfoTab> {
   // TODO: Backend'den hastane bilgilerini çek
-  Map<String, dynamic> _hospitalInfo = {};
+  Map<String, dynamic> _hospitalInfo = {
+    'name': 'Örnek Hastane',
+    'address': 'Örnek Mah. Örnek Cad. No: 123',
+    'phone': '+90 123 456 7890',
+    'email': 'info@ornekhastane.com.tr',
+    'website': 'www.ornekhastane.com.tr',
+    'foundationYear': '2000',
+    'capacity': {
+      'beds': 500,
+      'icuBeds': 50,
+    },
+    'staff': {
+      'doctors': 150,
+      'nurses': 300,
+      'technicians': 100,
+    },
+    'departments': [
+      'Acil Servis',
+      'Kardiyoloji',
+      'Nöroloji',
+      'Ortopedi',
+      'Dahiliye',
+      'Genel Cerrahi',
+    ],
+    'statistics': {
+      'dailyPatients': 1000,
+      'monthlyOperations': 200,
+    },
+    'workingHours': {
+      'weekdays': 'Pazartesi - Cuma: 08:00 - 17:00',
+      'weekends': 'Cumartesi: 08:00 - 13:00, Pazar: Kapalı',
+    },
+    'insurances': [
+      'SGK',
+      'Özel Sigorta A',
+      'Özel Sigorta B',
+    ],
+  };
 
   bool _isEditing = false;
   late TextEditingController _nameController;
@@ -32,7 +69,8 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
     _phoneController = TextEditingController(text: _hospitalInfo['phone']);
     _emailController = TextEditingController(text: _hospitalInfo['email']);
     _websiteController = TextEditingController(text: _hospitalInfo['website']);
-    _foundationYearController = TextEditingController(text: _hospitalInfo['foundationYear']);
+    _foundationYearController =
+        TextEditingController(text: _hospitalInfo['foundationYear']);
   }
 
   @override
@@ -197,7 +235,8 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
                       _buildInfoRow('Telefon', _hospitalInfo['phone']),
                       _buildInfoRow('E-posta', _hospitalInfo['email']),
                       _buildInfoRow('Web Sitesi', _hospitalInfo['website']),
-                      _buildInfoRow('Kuruluş Yılı', _hospitalInfo['foundationYear']),
+                      _buildInfoRow(
+                          'Kuruluş Yılı', _hospitalInfo['foundationYear']),
                     ],
                   ),
           ],
@@ -207,7 +246,7 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
   }
 
   Widget _buildCapacitySection() {
-    final capacity = _hospitalInfo['capacity'] as Map<String, dynamic>;
+    final capacity = _hospitalInfo['capacity'] as Map<String, dynamic>? ?? {};
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -234,14 +273,14 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
                 Expanded(
                   child: _buildCapacityItem(
                     'Yatak Sayısı',
-                    capacity['beds'].toString(),
+                    capacity['beds']?.toString() ?? 'N/A',
                     Icons.hotel,
                   ),
                 ),
                 Expanded(
                   child: _buildCapacityItem(
                     'Yoğun Bakım',
-                    capacity['icuBeds'].toString(),
+                    capacity['icuBeds']?.toString() ?? 'N/A',
                     Icons.monitor_heart,
                   ),
                 ),
@@ -253,14 +292,14 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
                 Expanded(
                   child: _buildCapacityItem(
                     'Ameliyathane',
-                    capacity['operatingRooms'].toString(),
+                    capacity['operatingRooms']?.toString() ?? 'N/A',
                     Icons.medical_services,
                   ),
                 ),
                 Expanded(
                   child: _buildCapacityItem(
                     'Acil Kapasite',
-                    capacity['emergencyCapacity'].toString(),
+                    capacity['emergencyCapacity']?.toString() ?? 'N/A',
                     Icons.emergency,
                   ),
                 ),
@@ -273,7 +312,7 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
   }
 
   Widget _buildStaffSection() {
-    final staff = _hospitalInfo['staff'] as Map<String, dynamic>;
+    final staff = _hospitalInfo['staff'] as Map<String, dynamic>? ?? {};
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -300,21 +339,21 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
                 Expanded(
                   child: _buildCapacityItem(
                     'Doktor',
-                    staff['doctors'].toString(),
+                    staff['doctors']?.toString() ?? 'N/A',
                     Icons.health_and_safety,
                   ),
                 ),
                 Expanded(
                   child: _buildCapacityItem(
                     'Hemşire',
-                    staff['nurses'].toString(),
+                    staff['nurses']?.toString() ?? 'N/A',
                     Icons.favorite,
                   ),
                 ),
                 Expanded(
                   child: _buildCapacityItem(
                     'Teknisyen',
-                    staff['technicians'].toString(),
+                    staff['technicians']?.toString() ?? 'N/A',
                     Icons.biotech,
                   ),
                 ),
@@ -326,14 +365,14 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
                 Expanded(
                   child: _buildCapacityItem(
                     'İdari',
-                    staff['administrative'].toString(),
+                    staff['administrative']?.toString() ?? 'N/A',
                     Icons.work,
                   ),
                 ),
                 Expanded(
                   child: _buildCapacityItem(
                     'Diğer',
-                    staff['other'].toString(),
+                    staff['other']?.toString() ?? 'N/A',
                     Icons.group,
                   ),
                 ),
@@ -347,7 +386,7 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
   }
 
   Widget _buildDepartmentsSection() {
-    final departments = _hospitalInfo['departments'] as List<dynamic>;
+    final departments = _hospitalInfo['departments'] as List<dynamic>? ?? [];
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -374,7 +413,7 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
               runSpacing: 8,
               children: departments.map((department) {
                 return Chip(
-                  label: Text(department),
+                  label: Text(department.toString()),
                   backgroundColor: HealthApp.primaryColor.withOpacity(0.1),
                   labelStyle: TextStyle(color: HealthApp.primaryColor),
                 );
@@ -387,7 +426,7 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
   }
 
   Widget _buildStatisticsSection() {
-    final stats = _hospitalInfo['stats'] as Map<String, dynamic>;
+    final stats = _hospitalInfo['statistics'] as Map<String, dynamic>? ?? {};
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -414,14 +453,14 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
                 Expanded(
                   child: _buildStatItem(
                     'Günlük Hasta',
-                    stats['dailyPatients'].toString(),
+                    stats['dailyPatients']?.toString() ?? 'N/A',
                     Icons.person,
                   ),
                 ),
                 Expanded(
                   child: _buildStatItem(
                     'Aylık Ameliyat',
-                    stats['monthlyOperations'].toString(),
+                    stats['monthlyOperations']?.toString() ?? 'N/A',
                     Icons.medical_services,
                   ),
                 ),
@@ -433,14 +472,14 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
                 Expanded(
                   child: _buildStatItem(
                     'Yatak Doluluk',
-                    '%${stats['bedOccupancyRate']}',
+                    stats['bedOccupancyRate']?.toString() ?? 'N/A',
                     Icons.hotel,
                   ),
                 ),
                 Expanded(
                   child: _buildStatItem(
                     'Günlük Acil',
-                    stats['emergencyVisitsPerDay'].toString(),
+                    stats['emergencyVisitsPerDay']?.toString() ?? 'N/A',
                     Icons.emergency,
                   ),
                 ),
@@ -453,7 +492,7 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
   }
 
   Widget _buildWorkingHoursSection() {
-    final hours = _hospitalInfo['workingHours'] as Map<String, dynamic>;
+    final hours = _hospitalInfo['workingHours'] as Map<String, dynamic>? ?? {};
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -475,31 +514,42 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
               ],
             ),
             const Divider(),
-            _buildWorkingHoursRow('Doktorlar', hours['doktor'], Icons.medical_services),
+            _buildWorkingHoursRow(
+                'Doktorlar', hours['doktor'] ?? 'N/A', Icons.medical_services),
             const Divider(height: 1, indent: 16, endIndent: 16),
-            _buildWorkingHoursRow('Hemşireler', hours['hemşire'], Icons.healing),
+            _buildWorkingHoursRow(
+                'Hemşireler', hours['hemşire'] ?? 'N/A', Icons.healing),
             const Divider(height: 1, indent: 16, endIndent: 16),
-            _buildWorkingHoursRow('Teknisyenler', hours['teknisyen'], Icons.biotech),
+            _buildWorkingHoursRow(
+                'Teknisyenler', hours['teknisyen'] ?? 'N/A', Icons.biotech),
             const Divider(height: 1, indent: 16, endIndent: 16),
-            _buildWorkingHoursRow('İdari Personel', hours['idari_personel'], Icons.business_center),
+            _buildWorkingHoursRow('İdari Personel',
+                hours['idari_personel'] ?? 'N/A', Icons.business_center),
             const Divider(height: 1, indent: 16, endIndent: 16),
-            _buildWorkingHoursRow('Temizlik Personeli', hours['temizlik'], Icons.cleaning_services),
+            _buildWorkingHoursRow('Temizlik Personeli',
+                hours['temizlik'] ?? 'N/A', Icons.cleaning_services),
             const Divider(height: 1, indent: 16, endIndent: 16),
-            _buildWorkingHoursRow('Güvenlik', hours['güvenlik'], Icons.security),
+            _buildWorkingHoursRow(
+                'Güvenlik', hours['güvenlik'] ?? 'N/A', Icons.security),
             const Divider(height: 1, indent: 16, endIndent: 16),
-            _buildWorkingHoursRow('Acil Servis', hours['acil_servis'], Icons.emergency, isHighlighted: true),
+            _buildWorkingHoursRow(
+                'Acil Servis', hours['acil_servis'] ?? 'N/A', Icons.emergency,
+                isHighlighted: true),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWorkingHoursRow(String position, String hours, IconData icon, {bool isHighlighted = false}) {
+  Widget _buildWorkingHoursRow(String position, String hours, IconData icon,
+      {bool isHighlighted = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Row(
         children: [
-          Icon(icon, color: isHighlighted ? Colors.red : HealthApp.primaryColor, size: 22),
+          Icon(icon,
+              color: isHighlighted ? Colors.red : HealthApp.primaryColor,
+              size: 22),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -517,7 +567,8 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
                   hours,
                   style: TextStyle(
                     color: isHighlighted ? Colors.red : Colors.black87,
-                    fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isHighlighted ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ],
@@ -529,7 +580,7 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
   }
 
   Widget _buildInsurancesSection() {
-    final insurances = _hospitalInfo['insurances'] as List<dynamic>;
+    final insurances = _hospitalInfo['insurances'] as List<dynamic>? ?? [];
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -556,7 +607,7 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
               runSpacing: 8,
               children: insurances.map((insurance) {
                 return Chip(
-                  label: Text(insurance),
+                  label: Text(insurance.toString()),
                   backgroundColor: Colors.green.withOpacity(0.1),
                   labelStyle: const TextStyle(color: Colors.green),
                 );
@@ -664,4 +715,4 @@ class _HospitalInfoTabState extends State<HospitalInfoTab> {
       ),
     );
   }
-} 
+}

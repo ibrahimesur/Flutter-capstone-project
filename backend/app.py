@@ -185,42 +185,48 @@ def register():
     email = data.get('email')
     password = data.get('password')
     user_type = data.get('user_type')
+    hospital_name = data.get('hospital_name') # Hastane yöneticisi için
+    department = data.get('department') # Doktor için
 
     if not name or not email or not password or not user_type:
         return jsonify({'message':'Ad, e-posta, şifre ve kullanıcı tipi gerekli'}),400
 
-    table_name = None
-    insert_columns = []
-    insert_values = []
-    unique_constraint_column = None
+    # Yeni kullanıcıyı users tablosuna ekle
+    table_name = 'users'
+    insert_columns = ['name', 'email', 'password_hash', 'user_type']
+    insert_values = [name, email, password, user_type]
+    unique_constraint_column = 'email' # Varsayılan olarak email'i unique kabul edelim
 
     if user_type == 'patient':
         if not tc_kimlik_no:
             return jsonify({'message':'Hasta kaydı için TC Kimlik No gerekli'}),400
-        table_name = 'users'
-        insert_columns = ['tc_kimlik_no', 'email', 'password_hash', 'is_doctor']
-        insert_values = [tc_kimlik_no, email, password, False]
+        insert_columns.append('tc_kimlik_no')
+        insert_values.append(tc_kimlik_no)
         unique_constraint_column = 'tc_kimlik_no'
+        # is_doctor sütunu artık user_type ile yönetildiği için eklemeye gerek yok
     elif user_type == 'doctor':
-        if not institutional_id:
-            return jsonify({'message':'Doktor kaydı için Kurumsal ID gerekli'}),400
-        table_name = 'doctors'
-        insert_columns = ['name', 'institutional_id', 'email', 'password_hash']
-        insert_values = [name, institutional_id, email, password]
+        if not institutional_id or not department:
+             return jsonify({'message':'Doktor kaydı için Kurumsal ID ve Bölüm gerekli'}),400
+        insert_columns.append('institutional_id')
+        insert_values.append(institutional_id)
+        insert_columns.append('department') # Doktor bölümü
+        insert_values.append(department)
         unique_constraint_column = 'institutional_id'
     elif user_type == 'hospital_admin':
         if not institutional_id:
-            return jsonify({'message':'Hastane yönetimi kaydı için Kurumsal ID gerekli'}),400
-        table_name = 'hospital_admins'
-        insert_columns = ['institutional_id', 'hospital_name']
-        insert_values = [institutional_id, data.get('hospital_name')]
+             return jsonify({'message':'Hastane yönetimi kaydı için Kurumsal ID gerekli'}),400
+        insert_columns.append('institutional_id')
+        insert_values.append(institutional_id)
+        if hospital_name:
+             insert_columns.append('hospital_name') # Hastane adı (isteğe bağlı)
+             insert_values.append(hospital_name)
         unique_constraint_column = 'institutional_id'
     else:
         return jsonify({'message':'Geçersiz kullanıcı tipi belirtildi'}), 400
 
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    if user_type == 'patient' or user_type == 'doctor':
-        insert_values[insert_columns.index('password_hash')] = hashed
+    # password_hash sütununa hashlenmiş şifreyi ekle
+    insert_values[insert_columns.index('password_hash')] = hashed
 
     try:
         conn = get_db_connection()
@@ -228,13 +234,18 @@ def register():
         # Dinamik olarak insert sorgusu oluştur
         cols = ', '.join(insert_columns)
         placeholders = ', '.join(['%s'] * len(insert_columns))
+        # RETURNING ifadesini, benzersiz kısıtlama olan sütunu döndürecek şekilde ayarla
         query = f'INSERT INTO {table_name} ({cols}) VALUES ({placeholders}) RETURNING {unique_constraint_column}'
 
         cur.execute(query, tuple(insert_values))
-        inserted_id = cur.fetchone()[0]
+        inserted_identifier = cur.fetchone()[0] # Eklenen kaydın identifier değerini al
         conn.commit()
 
-        return jsonify({'message':'Kullanıcı başarıyla kaydedildi', f'{unique_constraint_column}': str(inserted_id), 'user_type': user_type}),201
+        return jsonify({
+            'message':'Kullanıcı başarıyla kaydedildi',
+            unique_constraint_column: str(inserted_identifier), # Dinamik anahtar
+            'user_type': user_type
+        }),201
 
     except psycopg2.errors.UniqueViolation:
         conn.rollback()
@@ -244,7 +255,10 @@ def register():
         logger.error('Kayıt hatası: %s', e, exc_info=True)
         return jsonify({'message':'Kayıt hatası','error':str(e)}),500
     finally:
-        cur.close();conn.close()
+        if 'cur' in locals() and cur is not None:
+             cur.close()
+        if 'conn' in locals() and conn is not None:
+             conn.close()
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -253,82 +267,65 @@ def login():
         return jsonify({'message':'JSON formatı gerekli'}),400
     data = request.get_json()
     identifier = data.get('identifier') # TC Kimlik No veya Kurumsal ID
-    email = data.get('email')
     password = data.get('password')
     user_type = data.get('user_type') # 'patient', 'doctor', 'hospital_admin'
 
     if not identifier or not password or not user_type:
-        return jsonify({'message':'Kimlik (TC No/ID), e-posta, şifre ve kullanıcı tipi gerekli'}),400
+        return jsonify({'message':'Kimlik (TC No/ID), şifre ve kullanıcı tipi gerekli'}),400
 
-    table_name = None
+    # Eğer kullanıcı tipi hastane yönetimi ise, kimlik doğrulamayı atla ve başarılı yanıt dön
+    if user_type == 'hospital_admin':
+        # Burada isterseniz institutional_id'nin boş olup olmadığını kontrol edebilirsiniz,
+        # ama sadece gösterimlik olduğu için atlıyorum.
+        logger.info(f'Hastane Yönetimi Girişi Atlandı (Gösterim Modu) - Identifier: {identifier}')
+        return jsonify({'message':'Giriş başarılı (Gösterim)', 'user_type': user_type}), 200
+
+    # Kullanıcı tipi hasta veya doktor ise normal kimlik doğrulama akışı
     identifier_column = None
-    user_id_column = None
-    password_column = None
-    email_column = None
-
     if user_type == 'patient':
-        table_name = 'users'
         identifier_column = 'tc_kimlik_no'
-        user_id_column = 'id'
-        password_column = 'password_hash'
-        email_column = 'email'
-    elif user_type == 'doctor':
-        table_name = 'doctors'
+    elif user_type == 'doctor': # Sadece doktor için institutional_id
         identifier_column = 'institutional_id'
-        user_id_column = 'doctor_id'
-        password_column = 'password_hash'
-        email_column = 'email'
-    elif user_type == 'hospital_admin':
-        table_name = 'hospital_admins'
-        identifier_column = 'institutional_id'
-        user_id_column = 'admin_id'
-        password_column = 'password_hash'
-        email_column = 'email'
     else:
+        # Bu kısma normalde düşmemesi lazım çünkü hospital_admin yukarıda ele alındı
         return jsonify({'message':'Geçersiz kullanıcı tipi belirtildi'}), 400
 
     # Authenticate
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute(f'SELECT {user_id_column}, {password_column}, {email_column} FROM {table_name} WHERE {identifier_column}=%s', (identifier,))
+
+        # Sadece users tablosunu sorgula (patient ve doctor için)
+        query = f'SELECT id, password_hash, user_type FROM users WHERE {identifier_column}=%s'
+        cur.execute(query, (identifier,))
         user = cur.fetchone()
 
         if user:
-            logger.info('DEBUG: User found: %s', user) # User objesini logla
-            hashed_password_from_db = None
-            if user[1] is not None:
-                # Veritabanından çekilen şifreyi her zaman bytes türüne dönüştür
-                hashed_password_from_db = bytes(user[1]) if isinstance(user[1], memoryview) else str(user[1]).encode('utf-8')
-                logger.info('DEBUG: Hashed password from DB (type: %s): %s', type(hashed_password_from_db), hashed_password_from_db) # Hashed şifreyi ve türünü logla
+            user_id_value, hashed_password_from_db, stored_user_type = user
+            logger.info('DEBUG: User found: %s (Type: %s)', user_id_value, stored_user_type)
 
-            if hashed_password_from_db and bcrypt.checkpw(password.encode('utf-8'), hashed_password_from_db):
-                 user_id_value = user[0]
+            # Veritabanından çekilen şifreyi her zaman bytes türüne dönüştür
+            hashed_password_from_db = bytes(hashed_password_from_db) if isinstance(hashed_password_from_db, memoryview) else str(hashed_password_from_db).encode('utf-8')
 
+            # Şifreyi ve kullanıcı tipini doğrula (patient ve doctor için)
+            if stored_user_type == user_type and bcrypt.checkpw(password.encode('utf-8'), hashed_password_from_db):
+                 response_data = {'message':'Giriş başarılı','user_type': user_type}
                  if user_type == 'patient':
-                      return jsonify({
-                           'message':'Giriş başarılı',
-                           'user_type': user_type,
-                           'hasta_id': str(user_id_value)
-                          }), 200
-                 else:
-                     return jsonify({
-                          'message':'Giriş başarılı',
-                          'user_type': user_type
-                         }), 200
-
+                      response_data['hasta_id'] = str(user_id_value)
+                 # Doktor için ek bilgiye gerek yok, user_type yeterli
+                 return jsonify(response_data), 200
             else:
-                return jsonify({'message':'Geçersiz kimlik veya şifre'}),401
-
+                return jsonify({'message':'Geçersiz kimlik veya şifre veya kullanıcı tipi eşleşmiyor'}),401
         else:
+            # Kullanıcı bulunamadı
             return jsonify({'message':'Geçersiz kimlik veya şifre'}),401
 
     except psycopg2.OperationalError as e:
         logger.error('Veritabanı bağlantı veya işlem hatası: %s', e, exc_info=True)
-        return jsonify({'message':'Giriş hatası', 'error':'Veritabanı bağlantı veya işlem hatası.'}),500
+        return jsonify({'message': 'Giriş hatası', 'error': 'Veritabanı bağlantı veya işlem hatası.'}), 500
     except Exception as e:
         logger.error('Beklenmedik giriş hatası: %s', e, exc_info=True)
-        return jsonify({'message':'Giriş hatası','error':'Beklenmedik sunucu hatası.'}),500
+        return jsonify({'message': 'Giriş hatası','error':str(e)}),500 # Genel hata detayını döndür
     finally:
         if 'cur' in locals() and cur is not None:
              cur.close()

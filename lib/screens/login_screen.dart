@@ -12,9 +12,12 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final _formKey = GlobalKey<FormState>();
+  final _patientFormKey = GlobalKey<FormState>();
+  final _doctorFormKey = GlobalKey<FormState>();
+  final _hospitalFormKey = GlobalKey<FormState>();
   final _tcKimlikNoController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -38,11 +41,27 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     // Aktif olan herhangi bir input elementinin odağını kaldır (Web için faydalı olabilir)
     FocusManager.instance.primaryFocus?.unfocus();
 
-    if (_formKey.currentState!.validate()) {
+    // Aktif sekmeye göre doğru form key'i al
+    GlobalKey<FormState> currentFormKey;
+    switch (_tabController.index) {
+      case 0:
+        currentFormKey = _patientFormKey;
+        break;
+      case 1:
+        currentFormKey = _doctorFormKey;
+        break;
+      case 2:
+        currentFormKey = _hospitalFormKey;
+        break;
+      default:
+        currentFormKey = _patientFormKey;
+    }
+
+    if (currentFormKey.currentState!.validate()) {
       // Backend URL'sini web için 127.0.0.1:8000 olarak ayarlıyoruz
       // Android emülatörü için 10.0.2.2:8000 kullanılması gerekir
       final url = Uri.parse('http://127.0.0.1:8000/login');
-      
+
       String userType;
       String identifier;
       String emailToSend = '';
@@ -51,21 +70,28 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         case 0: // Hasta
           userType = 'patient';
           identifier = _tcKimlikNoController.text;
-          emailToSend = _emailController.text;
+          emailToSend = '';
           break;
         case 1: // Doktor
           userType = 'doctor';
           identifier = _emailController.text;
+          emailToSend =
+              _emailController.text; // Doktor için de e-posta gönderiliyor
           break;
         case 2: // Hastane Yönetimi
           userType = 'hospital_admin';
-          identifier = _emailController.text;
+          identifier = _emailController
+              .text; // Hastane ID için emailController kullanılıyor
+          emailToSend = ''; // Hastane yönetimi için e-posta alanı yok
           break;
         default:
           userType = 'patient';
           identifier = _tcKimlikNoController.text;
-          emailToSend = _emailController.text;
+          emailToSend = '';
       }
+
+      print(
+          'Giriş denemesi: User Type: $userType, Identifier: $identifier, Email: $emailToSend');
 
       try {
         final response = await http.post(
@@ -84,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         if (response.statusCode == 200) {
           final responseData = json.decode(response.body);
           print('Giriş başarılı: ${responseData['message']}');
-          
+
           // Başarılı hasta girişi durumunda hasta ID'sini kaydet
           if (userType == 'patient') {
             // Backend'den dönen yanıtın yapısını kontrol edin.
@@ -93,8 +119,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
             if (receivedHastaId != null) {
               final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('hasta_id', receivedHastaId); // Hasta ID'sini 'hasta_id' anahtarıyla kaydedin
-              print('Hasta ID SharedPreferences\'a kaydedildi: $receivedHastaId');
+              await prefs.setString('hasta_id',
+                  receivedHastaId); // Hasta ID'sini 'hasta_id' anahtarıyla kaydedin
+              print(
+                  'Hasta ID SharedPreferences\'a kaydedildi: $receivedHastaId');
             } else {
               print('Login başarılı ama backend hasta ID\'si döndürmedi.');
               // Kullanıcıya bilgi verilebilir veya bir hata loglanabilir.
@@ -133,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         }
       } catch (e) {
         if (!mounted) return; // Widget dispose edilmişse işlemi sonlandır
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Bağlantı hatası: ${e.toString()}'),
@@ -181,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Form(
-        key: _formKey,
+        key: _patientFormKey,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -282,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Form(
-        key: _formKey,
+        key: _doctorFormKey,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -376,7 +404,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Form(
-        key: _formKey,
+        key: _hospitalFormKey,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -402,14 +430,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             const SizedBox(height: 32),
             TextFormField(
               controller: _emailController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Hastane ID',
-                prefixIcon: Icon(Icons.business),
+                prefixIcon: Icon(Icons.local_hospital),
               ),
-              keyboardType: TextInputType.text,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Hastane ID gerekli';
+                  return 'Lütfen Hastane ID girin';
                 }
                 return null;
               },
@@ -417,14 +444,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             const SizedBox(height: 16),
             TextFormField(
               controller: _passwordController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Şifre',
                 prefixIcon: Icon(Icons.lock),
               ),
               obscureText: true,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Şifre gerekli';
+                  return 'Lütfen şifrenizi girin';
                 }
                 return null;
               },
@@ -445,20 +472,20 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Hesabınız yok mu?',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/register');
-                  },
-                  child: const Text('Üye Olun'),
-                ),
-              ],
+            TextButton(
+              onPressed: () {
+                // TODO: Hastane Yönetimi şifremi unuttum ekranı
+              },
+              child: const Text('Şifremi Unuttum?'),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                // TODO: Hastane Yönetimi kayıt ekranı
+                Navigator.pushNamed(context,
+                    '/register'); // Geçici olarak genel kayıt ekranına yönlendiriliyor
+              },
+              child: const Text('Hesabınız yok mu? Üye Olun'),
             ),
           ],
         ),
