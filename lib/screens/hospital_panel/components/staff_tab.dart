@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../../../main.dart';
 
 class StaffTab extends StatefulWidget {
@@ -41,7 +43,37 @@ class _StaffTabState extends State<StaffTab> {
   @override
   void initState() {
     super.initState();
+    fetchDoctors();
     _filteredStaffList = [..._staffList];
+  }
+
+  Future<void> fetchDoctors() async {
+    try {
+      final response = await http.get(Uri.parse('http://localhost:8000/list-doctors'));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          _staffList.clear();
+          _staffList.addAll(data.map((doctor) => {
+            'id': doctor['doctor_id'].toString(),
+            'name': doctor['name'] ?? '',
+            'position': 'Doktor',
+            'department': doctor['department'] ?? '',
+            'phone': '+90 5XX XXX XX XX', // Backend'den gelmiyor, örnek
+            'email': doctor['institutional_id'] ?? '',
+            'status': 'Aktif', // Backend'den gelmiyor, örnek
+            'joinDate': '',
+            'schedule': '',
+            'specialization': '',
+          }));
+          _filterStaff();
+        });
+      } else {
+        print('Doktorlar çekilemedi: \\${response.statusCode}');
+      }
+    } catch (e) {
+      print('Doktorlar çekilirken hata oluştu: \\${e.toString()}');
+    }
   }
 
   void _filterStaff() {

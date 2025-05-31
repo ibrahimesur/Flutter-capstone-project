@@ -3,7 +3,7 @@ CREATE TABLE users (
     tc_kimlik_no VARCHAR(11) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    is_doctor BOOLEAN DEFAULT FALSE,
+    user_type VARCHAR(20) NOT NULL CHECK (user_type IN ('patient', 'doctor', 'hospital_admin')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -15,8 +15,7 @@ CREATE TABLE doctors (
     institutional_id VARCHAR(255) UNIQUE NOT NULL, -- Kurumsal Doktor ID (Benzersiz)
     name VARCHAR(255) NOT NULL, -- Ad Soyad
     email VARCHAR(255) UNIQUE NOT NULL, -- E-posta (Benzersiz)
-    department VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL, -- Şifre (Hashlenmiş veya güvenli bir şekilde saklanmalı)
+    password_hash VARCHAR(255) NOT NULL, -- Şifre (Hashlenmiş veya güvenli bir şekilde saklanmalı)
     department VARCHAR(255), -- Bölüm (isteğe bağlı)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP -- Kayıt tarihi
 );
@@ -26,11 +25,11 @@ CREATE TABLE doctors (
 CREATE TABLE hospital_admins (
     admin_id SERIAL PRIMARY KEY, -- Otomatik artan benzersiz kimlik
     institutional_id VARCHAR(255) UNIQUE NOT NULL, -- Kurumsal Hastane ID (Benzersiz)
-    name VARCHAR(255) NOT NULL, -- Ad Soyad
-    email VARCHAR(255) UNIQUE NOT NULL, -- E-posta (Benzersiz)
-    password VARCHAR(255) NOT NULL, -- Şifre (Hashlenmiş veya güvenli bir şekilde saklanmalı)
     hospital_name VARCHAR(255), -- Bağlı olduğu hastane adı (isteğe bağlı)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP -- Kayıt tarihi
+     name VARCHAR(255) NOT NULL, -- Ad Soyad
+    email VARCHAR(255) UNIQUE NOT NULL, -- E-posta (Benzersiz)
+    password VARCHAR(255) NOT NULL, -- Şifre (Hashlenmiş veya güvenli bir şekilde saklanmalı)
 );
 
 CREATE TABLE randevular (

@@ -185,161 +185,226 @@ def register():
     email = data.get('email')
     password = data.get('password')
     user_type = data.get('user_type')
+    hospital_name = data.get('hospital_name') # Hastane yöneticisi için
+    department = data.get('department') # Doktor için
 
     if not name or not email or not password or not user_type:
         return jsonify({'message':'Ad, e-posta, şifre ve kullanıcı tipi gerekli'}),400
 
-    table_name = None
-    insert_columns = []
-    insert_values = []
-    unique_constraint_column = None
-
-    if user_type == 'patient':
-        if not tc_kimlik_no:
-            return jsonify({'message':'Hasta kaydı için TC Kimlik No gerekli'}),400
-        table_name = 'users'
-        insert_columns = ['tc_kimlik_no', 'email', 'password_hash', 'is_doctor']
-        insert_values = [tc_kimlik_no, email, password, False]
-        unique_constraint_column = 'tc_kimlik_no'
-    elif user_type == 'doctor':
-        if not institutional_id:
-            return jsonify({'message':'Doktor kaydı için Kurumsal ID gerekli'}),400
-        table_name = 'doctors'
-        insert_columns = ['name', 'institutional_id', 'email', 'password_hash']
-        insert_values = [name, institutional_id, email, password]
-        unique_constraint_column = 'institutional_id'
-    elif user_type == 'hospital_admin':
-        if not institutional_id:
-            return jsonify({'message':'Hastane yönetimi kaydı için Kurumsal ID gerekli'}),400
-        table_name = 'hospital_admins'
-        insert_columns = ['institutional_id', 'hospital_name']
-        insert_values = [institutional_id, data.get('hospital_name')]
-        unique_constraint_column = 'institutional_id'
-    else:
-        return jsonify({'message':'Geçersiz kullanıcı tipi belirtildi'}), 400
-
-    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    if user_type == 'patient' or user_type == 'doctor':
-        insert_values[insert_columns.index('password_hash')] = hashed
-
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        # Dinamik olarak insert sorgusu oluştur
-        cols = ', '.join(insert_columns)
-        placeholders = ', '.join(['%s'] * len(insert_columns))
-        query = f'INSERT INTO {table_name} ({cols}) VALUES ({placeholders}) RETURNING {unique_constraint_column}'
 
-        cur.execute(query, tuple(insert_values))
-        inserted_id = cur.fetchone()[0]
-        conn.commit()
+        if user_type == 'doctor':
+            if not institutional_id or not department:
+                return jsonify({'message':'Doktor kaydı için Kurumsal ID ve Bölüm gerekli'}),400
+            
+            # Doktorları doctors tablosuna ekle
+            hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            query = '''
+                INSERT INTO doctors (institutional_id, name, email, password_hash, department)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING doctor_id
+            '''
+            cur.execute(query, (institutional_id, name, email, hashed, department))
+            doctor_id = cur.fetchone()[0]
+            conn.commit()
 
-        return jsonify({'message':'Kullanıcı başarıyla kaydedildi', f'{unique_constraint_column}': str(inserted_id), 'user_type': user_type}),201
+            return jsonify({
+                'message':'Doktor başarıyla kaydedildi',
+                'doctor_id': doctor_id,
+                'user_type': user_type
+            }),201
+
+        elif user_type == 'patient':
+            if not tc_kimlik_no:
+                return jsonify({'message':'Hasta kaydı için TC Kimlik No gerekli'}),400
+            
+            # Hastaları users tablosuna ekle
+            hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            query = '''
+                INSERT INTO users (tc_kimlik_no, email, password_hash, user_type, name)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
+            '''
+            cur.execute(query, (tc_kimlik_no, email, hashed, user_type, name))
+            user_id = cur.fetchone()[0]
+            conn.commit()
+
+            return jsonify({
+                'message':'Hasta başarıyla kaydedildi',
+                'hasta_id': str(user_id),
+                'user_type': user_type
+            }),201
+
+        elif user_type == 'hospital_admin':
+            if not institutional_id or not hospital_name:
+                return jsonify({'message':'Hastane yönetimi kaydı için Kurumsal ID ve Hastane Adı gerekli'}),400
+            
+            # Hastane yöneticilerini hospital_admins tablosuna ekle
+            hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            query = '''
+                INSERT INTO hospital_admins (institutional_id, name, email, password_hash, hospital_name)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING admin_id
+            '''
+            cur.execute(query, (institutional_id, name, email, hashed, hospital_name))
+            admin_id = cur.fetchone()[0]
+            conn.commit()
+
+            return jsonify({
+                'message':'Hastane yöneticisi başarıyla kaydedildi',
+                'admin_id': str(admin_id),
+                'user_type': user_type
+            }),201
+
+        else:
+            return jsonify({'message':'Geçersiz kullanıcı tipi belirtildi'}), 400
 
     except psycopg2.errors.UniqueViolation:
         conn.rollback()
-        return jsonify({'message':f'Bu {unique_constraint_column} zaten kullanılıyor'}),409
+        return jsonify({'message':'Bu e-posta veya kimlik numarası zaten kullanılıyor'}),409
     except Exception as e:
         conn.rollback()
         logger.error('Kayıt hatası: %s', e, exc_info=True)
         return jsonify({'message':'Kayıt hatası','error':str(e)}),500
     finally:
-        cur.close();conn.close()
+        if 'cur' in locals() and cur is not None:
+            cur.close()
+        if 'conn' in locals() and conn is not None:
+            conn.close()
 
 @app.route('/login', methods=['POST'])
 def login():
-    # Validate JSON and input
     if not request.is_json:
         return jsonify({'message':'JSON formatı gerekli'}),400
     data = request.get_json()
     identifier = data.get('identifier') # TC Kimlik No veya Kurumsal ID
-    email = data.get('email')
     password = data.get('password')
     user_type = data.get('user_type') # 'patient', 'doctor', 'hospital_admin'
 
+    logger.info('Login isteği alındı - Kullanıcı tipi: %s, Identifier: %s', user_type, identifier)
+
     if not identifier or not password or not user_type:
-        return jsonify({'message':'Kimlik (TC No/ID), e-posta, şifre ve kullanıcı tipi gerekli'}),400
+        logger.warning('Eksik parametreler - identifier: %s, password: %s, user_type: %s', 
+                      bool(identifier), bool(password), user_type)
+        return jsonify({'message':'Kimlik (TC No/ID), şifre ve kullanıcı tipi gerekli'}),400
 
-    table_name = None
-    identifier_column = None
-    user_id_column = None
-    password_column = None
-    email_column = None
-
-    if user_type == 'patient':
-        table_name = 'users'
-        identifier_column = 'tc_kimlik_no'
-        user_id_column = 'id'
-        password_column = 'password_hash'
-        email_column = 'email'
-    elif user_type == 'doctor':
-        table_name = 'doctors'
-        identifier_column = 'institutional_id'
-        user_id_column = 'doctor_id'
-        password_column = 'password_hash'
-        email_column = 'email'
-    elif user_type == 'hospital_admin':
-        table_name = 'hospital_admins'
-        identifier_column = 'institutional_id'
-        user_id_column = 'admin_id'
-        password_column = 'password_hash'
-        email_column = 'email'
-    else:
-        return jsonify({'message':'Geçersiz kullanıcı tipi belirtildi'}), 400
-
-    # Authenticate
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute(f'SELECT {user_id_column}, {password_column}, {email_column} FROM {table_name} WHERE {identifier_column}=%s', (identifier,))
-        user = cur.fetchone()
 
-        if user:
-            logger.info('DEBUG: User found: %s', user) # User objesini logla
-            hashed_password_from_db = None
-            if user[1] is not None:
-                # Veritabanından çekilen şifreyi her zaman bytes türüne dönüştür
-                hashed_password_from_db = bytes(user[1]) if isinstance(user[1], memoryview) else str(user[1]).encode('utf-8')
-                logger.info('DEBUG: Hashed password from DB (type: %s): %s', type(hashed_password_from_db), hashed_password_from_db) # Hashed şifreyi ve türünü logla
+        if user_type == 'doctor':
+            # Doktor girişi için doctors tablosunu kullan
+            query = 'SELECT doctor_id, password_hash, name FROM doctors WHERE institutional_id = %s'
+            logger.info('DEBUG: Executing query: %s with params: %s', query, (identifier,))
+            cur.execute(query, (identifier,))
+            user = cur.fetchone()
 
-            if hashed_password_from_db and bcrypt.checkpw(password.encode('utf-8'), hashed_password_from_db):
-                 user_id_value = user[0]
+            if user:
+                doctor_id, hashed_password, name = user
+                logger.info('DEBUG: Doctor found: %s', doctor_id)
+                logger.info('DEBUG: Hashed password from DB: %s', hashed_password)
 
-                 if user_type == 'patient':
-                      return jsonify({
-                           'message':'Giriş başarılı',
-                           'user_type': user_type,
-                           'hasta_id': str(user_id_value)
-                          }), 200
-                 elif user_type == 'doctor':
-                     return jsonify({
-                          'message':'Giriş başarılı',
-                          'user_type': user_type,
-                          'doctor_id': str(user_id_value)
-                         }), 200
-                 else:
-                     return jsonify({
-                          'message':'Giriş başarılı',
-                          'user_type': user_type
-                         }), 200
+                # Şifreyi doğrula
+                try:
+                    password_check = bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+                    logger.info('DEBUG: Password check result: %s', password_check)
+                except Exception as e:
+                    logger.error('Şifre doğrulama hatası: %s', str(e))
+                    return jsonify({'message': 'Şifre doğrulama hatası'}), 500
 
+                if password_check:
+                    return jsonify({
+                        'message': 'Giriş başarılı',
+                        'user_type': user_type,
+                        'doctor_id': doctor_id,
+                        'name': name
+                    }), 200
+                else:
+                    return jsonify({'message': 'Geçersiz kimlik veya şifre'}), 401
             else:
-                return jsonify({'message':'Geçersiz kimlik veya şifre'}),401
+                logger.warning('Doktor bulunamadı - institutional_id: %s', identifier)
+                return jsonify({'message': 'Geçersiz kimlik veya şifre'}), 401
 
-        else:
-            return jsonify({'message':'Geçersiz kimlik veya şifre'}),401
+        elif user_type == 'patient':
+            # Hasta girişi için users tablosunu kullan
+            query = 'SELECT id, password_hash, name FROM users WHERE tc_kimlik_no = %s AND user_type = %s'
+            logger.info('DEBUG: Executing query: %s with params: %s', query, (identifier, user_type))
+            cur.execute(query, (identifier, user_type))
+            user = cur.fetchone()
+
+            if user:
+                user_id, hashed_password, name = user
+                logger.info('DEBUG: Patient found: %s', user_id)
+                logger.info('DEBUG: Hashed password from DB: %s', hashed_password)
+
+                # Şifreyi doğrula
+                try:
+                    password_check = bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+                    logger.info('DEBUG: Password check result: %s', password_check)
+                except Exception as e:
+                    logger.error('Şifre doğrulama hatası: %s', str(e))
+                    return jsonify({'message': 'Şifre doğrulama hatası'}), 500
+
+                if password_check:
+                    return jsonify({
+                        'message': 'Giriş başarılı',
+                        'user_type': user_type,
+                        'hasta_id': str(user_id),
+                        'name': name
+                    }), 200
+                else:
+                    return jsonify({'message': 'Geçersiz kimlik veya şifre'}), 401
+            else:
+                logger.warning('Hasta bulunamadı - tc_kimlik_no: %s', identifier)
+                return jsonify({'message': 'Geçersiz kimlik veya şifre'}), 401
+
+        elif user_type == 'hospital_admin':
+            # Hastane yöneticisi girişi için hospital_admins tablosunu kullan
+            query = 'SELECT admin_id, password_hash, name, hospital_name FROM hospital_admins WHERE institutional_id = %s'
+            logger.info('DEBUG: Executing query: %s with params: %s', query, (identifier,))
+            cur.execute(query, (identifier,))
+            admin = cur.fetchone()
+
+            if admin:
+                admin_id, hashed_password, name, hospital_name = admin
+                logger.info('DEBUG: Admin found: %s', admin_id)
+                logger.info('DEBUG: Hashed password from DB: %s', hashed_password)
+
+                # Şifreyi doğrula
+                try:
+                    password_check = bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+                    logger.info('DEBUG: Password check result: %s', password_check)
+                except Exception as e:
+                    logger.error('Şifre doğrulama hatası: %s', str(e))
+                    return jsonify({'message': 'Şifre doğrulama hatası'}), 500
+
+                if password_check:
+                    return jsonify({
+                        'message': 'Giriş başarılı',
+                        'user_type': user_type,
+                        'admin_id': str(admin_id),
+                        'name': name,
+                        'hospital_name': hospital_name
+                    }), 200
+                else:
+                    return jsonify({'message': 'Geçersiz kimlik veya şifre'}), 401
+            else:
+                logger.warning('Hastane yöneticisi bulunamadı - institutional_id: %s', identifier)
+                return jsonify({'message': 'Geçersiz kimlik veya şifre'}), 401
 
     except psycopg2.OperationalError as e:
         logger.error('Veritabanı bağlantı veya işlem hatası: %s', e, exc_info=True)
-        return jsonify({'message':'Giriş hatası', 'error':'Veritabanı bağlantı veya işlem hatası.'}),500
+        return jsonify({'message': 'Giriş hatası', 'error': 'Veritabanı bağlantı veya işlem hatası.'}), 500
     except Exception as e:
-        logger.error('Beklenmedik giriş hatası: %s', e, exc_info=True)
-        return jsonify({'message':'Giriş hatası','error':'Beklenmedik sunucu hatası.'}),500
+        logger.error('Beklenmeyen hata: %s', e, exc_info=True)
+        return jsonify({'message': 'Giriş hatası','error':str(e)}),500
     finally:
         if 'cur' in locals() and cur is not None:
-             cur.close()
+            cur.close()
         if 'conn' in locals() and conn is not None:
-             conn.close()
+            conn.close()
 
 @app.route('/book-appointment', methods=['POST'])
 def book_appointment():
@@ -470,24 +535,16 @@ def list_doctors():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        
-        # Doktorları ve bölümlerini getir
-        cur.execute('''
-            SELECT d.doctor_id, d.name, d.institutional_id, d.department, d.email
-            FROM doctors d
-            ORDER BY d.name
-        ''')
-        
+        cur.execute('SELECT name, doctor_id, institutional_id, department FROM doctors')
         doctors = cur.fetchall()
-        
+
         doctor_list = []
         for doc in doctors:
             doctor_list.append({
-                'doctor_id': str(doc[0]),  # String'e çevir
-                'name': doc[1],
+                'name': doc[0],
+                'doctor_id': doc[1],
                 'institutional_id': doc[2],
-                'department': doc[3],
-                'email': doc[4]
+                'department': doc[3]
             })
 
         return jsonify(doctor_list), 200
@@ -886,271 +943,77 @@ def update_profile():
         if 'conn' in locals() and conn is not None:
             conn.close()
 
-@app.route('/doctor-appointments/<doctor_id>/today', methods=['GET'])
-def get_doctor_today_appointments(doctor_id):
+@app.route('/doctor-login', methods=['POST'])
+def doctor_login():
+    if not request.is_json:
+        logger.error('JSON formatı gerekli değil')
+        return jsonify({'message':'JSON formatı gerekli'}),400
+    
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
+        data = request.get_json()
+        logger.info('Gelen request data: %s', data)
         
-        today = datetime.datetime.now().date()
-        
-        cur.execute('''
-            SELECT 
-                r.id,
-                r.hasta_id,
-                r.doctor_id,
-                r.randevu_tarihi,
-                r.randevu_saati,
-                r.notlar,
-                r.doktor_notlari,
-                sp.ad_soyad as hasta_adi,
-                sp.yas as hasta_yasi,
-                sp.boy,
-                sp.kilo,
-                sp.kan_grubu,
-                sp.kronik_hastaliklar,
-                sp.alerjiler,
-                d.department as bolum
-            FROM randevular r
-            JOIN saglik_profili sp ON r.hasta_id = sp.hasta_id
-            JOIN doctors d ON r.doctor_id = d.doctor_id
-            WHERE r.doctor_id = %s 
-            AND r.randevu_tarihi = %s
-            ORDER BY r.randevu_saati
-        ''', (doctor_id, today))
-        
-        appointments = cur.fetchall()
-        
-        result = []
-        for app in appointments:
-            result.append({
-                'id': app[0],
-                'hasta_id': app[1],
-                'doctor_id': app[2],
-                'randevu_tarihi': app[3].isoformat(),
-                'randevu_saati': app[4].strftime('%H:%M'),
-                'notlar': app[5],
-                'doktor_notlari': app[6],
-                'hasta_adi': app[7],
-                'hasta_yasi': app[8],
-                'boy': app[9],
-                'kilo': app[10],
-                'kan_grubu': app[11],
-                'kronik_hastaliklar': app[12],
-                'alerjiler': app[13],
-                'bolum': app[14]
-            })
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if 'cur' in locals():
-            cur.close()
-        if 'conn' in locals():
-            conn.close()
+        institutional_id = data.get('institutional_id')
+        password = data.get('password')
 
-@app.route('/doctor-appointments/<doctor_id>/future', methods=['GET'])
-def get_doctor_future_appointments(doctor_id):
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        
-        today = datetime.datetime.now().date()
-        
-        cur.execute('''
-            SELECT 
-                r.id,
-                r.hasta_id,
-                r.doctor_id,
-                r.randevu_tarihi,
-                r.randevu_saati,
-                r.notlar,
-                r.doktor_notlari,
-                sp.ad_soyad as hasta_adi,
-                sp.yas as hasta_yasi,
-                sp.boy,
-                sp.kilo,
-                sp.kan_grubu,
-                sp.kronik_hastaliklar,
-                sp.alerjiler,
-                d.department as bolum
-            FROM randevular r
-            JOIN saglik_profili sp ON r.hasta_id = sp.hasta_id
-            JOIN doctors d ON r.doctor_id = d.doctor_id
-            WHERE r.doctor_id = %s 
-            AND r.randevu_tarihi > %s
-            ORDER BY r.randevu_tarihi, r.randevu_saati
-        ''', (doctor_id, today))
-        
-        appointments = cur.fetchall()
-        
-        result = []
-        for app in appointments:
-            result.append({
-                'id': app[0],
-                'hasta_id': app[1],
-                'doctor_id': app[2],
-                'randevu_tarihi': app[3].isoformat(),
-                'randevu_saati': app[4].strftime('%H:%M'),
-                'notlar': app[5],
-                'doktor_notlari': app[6],
-                'hasta_adi': app[7],
-                'hasta_yasi': app[8],
-                'boy': app[9],
-                'kilo': app[10],
-                'kan_grubu': app[11],
-                'kronik_hastaliklar': app[12],
-                'alerjiler': app[13],
-                'bolum': app[14]
-            })
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if 'cur' in locals():
-            cur.close()
-        if 'conn' in locals():
-            conn.close()
+        logger.info('Doktor login isteği alındı - Kurumsal ID: %s', institutional_id)
 
-@app.route('/doctor-appointments/<doctor_id>/archived', methods=['GET'])
-def get_doctor_archived_appointments(doctor_id):
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        
-        today = datetime.datetime.now().date()
-        
-        cur.execute('''
-            SELECT 
-                r.id,
-                r.hasta_id,
-                r.doctor_id,
-                r.randevu_tarihi,
-                r.randevu_saati,
-                r.notlar,
-                r.doktor_notlari,
-                sp.ad_soyad as hasta_adi,
-                sp.yas as hasta_yasi,
-                sp.boy,
-                sp.kilo,
-                sp.kan_grubu,
-                sp.kronik_hastaliklar,
-                sp.alerjiler,
-                d.department as bolum
-            FROM randevular r
-            JOIN saglik_profili sp ON r.hasta_id = sp.hasta_id
-            JOIN doctors d ON r.doctor_id = d.doctor_id
-            WHERE r.doctor_id = %s 
-            AND r.randevu_tarihi < %s
-            ORDER BY r.randevu_tarihi DESC, r.randevu_saati DESC
-        ''', (doctor_id, today))
-        
-        appointments = cur.fetchall()
-        
-        result = []
-        for app in appointments:
-            result.append({
-                'id': app[0],
-                'hasta_id': app[1],
-                'doctor_id': app[2],
-                'randevu_tarihi': app[3].isoformat(),
-                'randevu_saati': app[4].strftime('%H:%M'),
-                'notlar': app[5],
-                'doktor_notlari': app[6],
-                'hasta_adi': app[7],
-                'hasta_yasi': app[8],
-                'boy': app[9],
-                'kilo': app[10],
-                'kan_grubu': app[11],
-                'kronik_hastaliklar': app[12],
-                'alerjiler': app[13],
-                'bolum': app[14]
-            })
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if 'cur' in locals():
-            cur.close()
-        if 'conn' in locals():
-            conn.close()
+        if not institutional_id or not password:
+            logger.warning('Eksik parametreler - institutional_id: %s, password: %s', 
+                          bool(institutional_id), bool(password))
+            return jsonify({'message':'Kurumsal ID ve şifre gerekli'}),400
 
-@app.route('/cancel-appointment/<appointment_id>', methods=['POST'])
-def cancel_appointment(appointment_id):
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        
-        # Randevuyu bul ve iptal et
-        cur.execute('''
-            UPDATE randevular 
-            SET durum = 'iptal'
-            WHERE id = %s
-            RETURNING doctor_id, randevu_tarihi, randevu_saati
-        ''', (appointment_id,))
-        
-        result = cur.fetchone()
-        if not result:
-            return jsonify({'message': 'Randevu bulunamadı'}), 404
-            
-        doctor_id, randevu_tarihi, randevu_saati = result
-        
-        # Takvim kaydını güncelle
-        cur.execute('''
-            UPDATE doktor_takvimleri 
-            SET durum = 'müsait'
-            WHERE doctor_id = %s 
-            AND tarih = %s 
-            AND saat = %s
-        ''', (doctor_id, randevu_tarihi, randevu_saati))
-        
-        conn.commit()
-        return jsonify({'message': 'Randevu başarıyla iptal edildi'}), 200
-        
-    except Exception as e:
-        conn.rollback()
-        logger.error('Randevu iptal hatası: %s', e, exc_info=True)
-        return jsonify({'message': 'Randevu iptal edilirken hata oluştu', 'error': str(e)}), 500
-    finally:
-        if 'cur' in locals():
-            cur.close()
-        if 'conn' in locals():
-            conn.close()
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
 
-@app.route('/complete-appointment/<appointment_id>', methods=['POST'])
-def complete_appointment(appointment_id):
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        
-        # Randevuyu tamamlandı olarak işaretle
-        cur.execute('''
-            UPDATE randevular 
-            SET durum = 'tamamlandı'
-            WHERE id = %s
-        ''', (appointment_id,))
-        
-        if cur.rowcount == 0:
-            return jsonify({'message': 'Randevu bulunamadı'}), 404
-            
-        conn.commit()
-        return jsonify({'message': 'Randevu başarıyla tamamlandı'}), 200
-        
+            # Doktor girişi için doctors tablosunu kullan
+            query = 'SELECT doctor_id, password_hash, name, department FROM doctors WHERE institutional_id = %s'
+            logger.info('DEBUG: Executing query: %s with params: %s', query, (institutional_id,))
+            cur.execute(query, (institutional_id,))
+            doctor = cur.fetchone()
+
+            if doctor:
+                doctor_id, hashed_password, name, department = doctor
+                logger.info('DEBUG: Doctor found: %s', doctor_id)
+                logger.info('DEBUG: Hashed password from DB: %s', hashed_password)
+
+                # Şifreyi doğrula
+                try:
+                    password_check = bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+                    logger.info('DEBUG: Password check result: %s', password_check)
+                except Exception as e:
+                    logger.error('Şifre doğrulama hatası: %s', str(e))
+                    return jsonify({'message': 'Şifre doğrulama hatası'}), 500
+
+                if password_check:
+                    return jsonify({
+                        'message': 'Giriş başarılı',
+                        'doctor_id': doctor_id,
+                        'name': name,
+                        'institutional_id': institutional_id,
+                        'department': department
+                    }), 200
+                else:
+                    return jsonify({'message': 'Geçersiz kimlik veya şifre'}), 401
+            else:
+                logger.warning('Doktor bulunamadı - institutional_id: %s', institutional_id)
+                return jsonify({'message': 'Geçersiz kimlik veya şifre'}), 401
+
+        except psycopg2.OperationalError as e:
+            logger.error('Veritabanı bağlantı veya işlem hatası: %s', e, exc_info=True)
+            return jsonify({'message': 'Giriş hatası', 'error': 'Veritabanı bağlantı veya işlem hatası.'}), 500
+        except Exception as e:
+            logger.error('Beklenmeyen hata: %s', e, exc_info=True)
+            return jsonify({'message': 'Giriş hatası','error':str(e)}),500
+        finally:
+            if 'cur' in locals() and cur is not None:
+                cur.close()
+            if 'conn' in locals() and conn is not None:
+                conn.close()
     except Exception as e:
-        conn.rollback()
-        logger.error('Randevu tamamlama hatası: %s', e, exc_info=True)
-        return jsonify({'message': 'Randevu tamamlanırken hata oluştu', 'error': str(e)}), 500
-    finally:
-        if 'cur' in locals():
-            cur.close()
-        if 'conn' in locals():
-            conn.close()
+        logger.error('Request işleme hatası: %s', e, exc_info=True)
+        return jsonify({'message': 'İstek işlenirken hata oluştu', 'error': str(e)}), 500
 
 if __name__ == '__main__':
     logger.info('Sunucu başlatılıyor…')

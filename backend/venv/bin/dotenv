@@ -1,4 +1,6 @@
-#!/Users/ece/Desktop/bitirme/Flutter-capstone-project/backend/venv/bin/python3.11
+#!/bin/sh
+'''exec' "/Users/ece/Desktop/capstone project/backend/venv/bin/python3.11" "$0" "$@"
+' '''
 # -*- coding: utf-8 -*-
 import re
 import sys

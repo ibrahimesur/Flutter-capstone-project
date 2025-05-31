@@ -19,6 +19,8 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _hospitalNameController = TextEditingController();
+  final _departmentController = TextEditingController();
 
   @override
   void initState() {
@@ -34,6 +36,8 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _hospitalNameController.dispose();
+    _departmentController.dispose();
     super.dispose();
   }
 
@@ -135,19 +139,13 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                 TextFormField(
                   controller: _tcKimlikNoController,
                   decoration: InputDecoration(
-                    labelText: userType == 'Doktor' ? 'Doktor ID' : 'Hastane ID',
+                    labelText: 'Kurumsal ID',
                     prefixIcon: const Icon(Icons.business),
                     hintText: userType == 'Doktor' ? 'Örn: DR12345' : 'Örn: HST789',
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return '${userType == 'Doktor' ? 'Doktor' : 'Hastane'} ID gerekli';
-                    }
-                    if (userType == 'Doktor' && !value.startsWith('DR')) {
-                      return 'Doktor ID "DR" ile başlamalıdır';
-                    }
-                    if (userType == 'Hastane Yönetimi' && !value.startsWith('HST')) {
-                      return 'Hastane ID "HST" ile başlamalıdır';
+                      return 'Kurumsal ID gerekli';
                     }
                     return null;
                   },
@@ -206,6 +204,36 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
                   return null;
                 },
               ),
+              const SizedBox(height: 16),
+              if (userType == 'Hastane Yönetimi')
+                TextFormField(
+                  controller: _hospitalNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Hastane Adı',
+                    prefixIcon: Icon(Icons.local_hospital),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Hastane Adı gerekli';
+                    }
+                    return null;
+                  },
+                ),
+              const SizedBox(height: 16),
+              if (userType == 'Doktor')
+                TextFormField(
+                  controller: _departmentController,
+                  decoration: const InputDecoration(
+                    labelText: 'Bölüm',
+                    prefixIcon: Icon(Icons.local_hospital),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Bölüm gerekli';
+                    }
+                    return null;
+                  },
+                ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
@@ -255,6 +283,8 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
     String userType;
     String? tcKimlikNoToSend = null;
     String? institutionalIdToSend = null;
+    String? hospitalNameToSend = null;
+    String? departmentToSend = null;
 
     switch (_tabController.index) {
       case 0: // Hasta
@@ -263,11 +293,13 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
         break;
       case 1: // Doktor
         userType = 'doctor';
-        institutionalIdToSend = _tcKimlikNoController.text; // Doktor ID'si için aynı controller kullanılıyor
+        institutionalIdToSend = _tcKimlikNoController.text;
+        departmentToSend = _departmentController.text;
         break;
       case 2: // Hastane Yönetimi
         userType = 'hospital_admin';
-        institutionalIdToSend = _tcKimlikNoController.text; // Hastane ID'si için aynı controller kullanılıyor
+        institutionalIdToSend = _tcKimlikNoController.text;
+        hospitalNameToSend = _hospitalNameController.text;
         break;
       default:
         // Bu duruma düşmemeli ama fallback olarak hasta diyelim
@@ -288,6 +320,8 @@ class _RegisterScreenState extends State<RegisterScreen> with SingleTickerProvid
           'email': _emailController.text,
           'password': _passwordController.text,
           'user_type': userType,
+          'hospital_name': hospitalNameToSend,
+          'department': departmentToSend,
         }),
       );
 

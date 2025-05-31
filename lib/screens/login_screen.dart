@@ -39,44 +39,57 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     FocusManager.instance.primaryFocus?.unfocus();
 
     if (_formKey.currentState!.validate()) {
-      // Backend URL'sini web için 127.0.0.1:8000 olarak ayarlıyoruz
-      // Android emülatörü için 10.0.2.2:8000 kullanılması gerekir
-      final url = Uri.parse('http://127.0.0.1:8000/login');
-      
-      String userType;
-      String identifier;
-      String emailToSend = '';
-
-      switch (_tabController.index) {
-        case 0: // Hasta
-          userType = 'patient';
-          identifier = _tcKimlikNoController.text;
-          emailToSend = _emailController.text;
-          break;
-        case 1: // Doktor
-          userType = 'doctor';
-          identifier = _emailController.text;
-          break;
-        case 2: // Hastane Yönetimi
-          userType = 'hospital_admin';
-          identifier = _emailController.text;
-          break;
-        default:
-          userType = 'patient';
-          identifier = _tcKimlikNoController.text;
-          emailToSend = _emailController.text;
-      }
-
       try {
-        final response = await http.post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode({
-            'identifier': identifier,
-            'email': emailToSend,
+        String userType;
+        String identifier;
+        String url;
+
+        switch (_tabController.index) {
+          case 0: // Hasta
+            userType = 'patient';
+            identifier = _tcKimlikNoController.text;
+            url = 'http://127.0.0.1:8000/login';
+            break;
+          case 1: // Doktor
+            userType = 'doctor';
+            identifier = _emailController.text;
+            url = 'http://127.0.0.1:8000/doctor-login';
+            break;
+          case 2: // Hastane Yönetimi
+            userType = 'hospital_admin';
+            identifier = _emailController.text;
+            url = 'http://127.0.0.1:8000/login';
+            break;
+          default:
+            userType = 'patient';
+            identifier = _tcKimlikNoController.text;
+            url = 'http://127.0.0.1:8000/login';
+        }
+
+        Map<String, dynamic> requestBody;
+        if (userType == 'doctor') {
+          requestBody = {
+            'institutional_id': _emailController.text,
+            'password': _passwordController.text,
+          };
+        } else if (userType == 'hospital_admin') {
+          requestBody = {
+            'identifier': _emailController.text,
             'password': _passwordController.text,
             'user_type': userType,
-          }),
+          };
+        } else {
+          requestBody = {
+            'identifier': identifier,
+            'password': _passwordController.text,
+            'user_type': userType,
+          };
+        }
+
+        final response = await http.post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(requestBody),
         );
 
         if (!mounted) return; // Widget dispose edilmişse işlemi sonlandır
@@ -87,32 +100,22 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           
           // Başarılı hasta girişi durumunda hasta ID'sini kaydet
           if (userType == 'patient') {
-            // Backend'den dönen yanıtın yapısını kontrol edin.
-            // Backend login endpoint'i artık başarılı hasta girişinde 'hasta_id'yi döndürüyor.
             final String? receivedHastaId = responseData['hasta_id'];
-
             if (receivedHastaId != null) {
               final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('hasta_id', receivedHastaId); // Hasta ID'sini 'hasta_id' anahtarıyla kaydedin
+              await prefs.setString('hasta_id', receivedHastaId);
               print('Hasta ID SharedPreferences\'a kaydedildi: $receivedHastaId');
-            } else {
-              print('Login başarılı ama backend hasta ID\'si döndürmedi.');
-              // Kullanıcıya bilgi verilebilir veya bir hata loglanabilir.
             }
           } else if (userType == 'doctor') {
             final prefs = await SharedPreferences.getInstance();
             final String? doctorId = responseData['doctor_id']?.toString();
-            
             if (doctorId != null) {
               await prefs.setString('user_id_value', doctorId);
               print('Doctor ID SharedPreferences\'a kaydedildi: $doctorId');
-            } else {
-              print('Login başarılı ama backend doctor_id döndürmedi.');
-              print('Backend yanıtı: $responseData');
             }
           }
 
-          if (!mounted) return; // Widget dispose edilmişse işlemi sonlandır
+          if (!mounted) return;
 
           // Sekme durumuna göre yönlendirme
           switch (_tabController.index) {
@@ -143,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           );
         }
       } catch (e) {
-        if (!mounted) return; // Widget dispose edilmişse işlemi sonlandır
+        if (!mounted) return;
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
